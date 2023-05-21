@@ -1,0 +1,227 @@
+{
+  "version": 3,
+  "targets": {
+    "net6.0": {
+      "AsmResolver/5.3.0": {
+        "type": "package",
+        "compile": {
+          "lib/net6.0/AsmResolver.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/AsmResolver.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "AsmResolver.PE/5.3.0": {
+        "type": "package",
+        "dependencies": {
+          "AsmResolver.PE.File": "5.3.0"
+        },
+        "compile": {
+          "lib/net6.0/AsmResolver.PE.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/AsmResolver.PE.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "AsmResolver.PE.File/5.3.0": {
+        "type": "package",
+        "dependencies": {
+          "AsmResolver": "5.3.0"
+        },
+        "compile": {
+          "lib/net6.0/AsmResolver.PE.File.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net6.0/AsmResolver.PE.File.dll": {
+            "related": ".xml"
+          }
+        }
+      },
+      "Iced/1.18.0": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.1/Iced.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.1/Iced.dll": {
+            "related": ".xml"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "AsmResolver/5.3.0": {
+      "sha512": "Gb6KzD1+c8TNZkA1Qw/CqmlN01S3jkE+ivLZos02cvh6KHCAiPUWQ5y25ZFg/3Gh/KUtt0lAEyFc9rOsUauF3g==",
+      "type": "package",
+      "path": "asmresolver/5.3.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "asmresolver.5.3.0.nupkg.sha512",
+        "asmresolver.nuspec",
+        "lib/net6.0/AsmResolver.dll",
+        "lib/net6.0/AsmResolver.xml",
+        "lib/netcoreapp3.1/AsmResolver.dll",
+        "lib/netcoreapp3.1/AsmResolver.xml",
+        "lib/netstandard2.0/AsmResolver.dll",
+        "lib/netstandard2.0/AsmResolver.xml"
+      ]
+    },
+    "AsmResolver.PE/5.3.0": {
+      "sha512": "DxVSiiLzHRHY9gIlZ00d1QtlfLSHn1evaVfLkaCG+5UWZ0EbU0+z2i+nq/fqK7FUxYatGBLrE9v0ON+XoaR5qQ==",
+      "type": "package",
+      "path": "asmresolver.pe/5.3.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "asmresolver.pe.5.3.0.nupkg.sha512",
+        "asmresolver.pe.nuspec",
+        "lib/net6.0/AsmResolver.PE.dll",
+        "lib/net6.0/AsmResolver.PE.xml",
+        "lib/netcoreapp3.1/AsmResolver.PE.dll",
+        "lib/netcoreapp3.1/AsmResolver.PE.xml",
+        "lib/netstandard2.0/AsmResolver.PE.dll",
+        "lib/netstandard2.0/AsmResolver.PE.xml"
+      ]
+    },
+    "AsmResolver.PE.File/5.3.0": {
+      "sha512": "ougqxlV4vCTEeS5cxXBishgGd+LEvE51Kd4WAjflASHKMto8FnQphD2WpYSYyzBEXx5D/uEQkK8on5mTIWWsig==",
+      "type": "package",
+      "path": "asmresolver.pe.file/5.3.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "asmresolver.pe.file.5.3.0.nupkg.sha512",
+        "asmresolver.pe.file.nuspec",
+        "lib/net6.0/AsmResolver.PE.File.dll",
+        "lib/net6.0/AsmResolver.PE.File.xml",
+        "lib/netcoreapp3.1/AsmResolver.PE.File.dll",
+        "lib/netcoreapp3.1/AsmResolver.PE.File.xml",
+        "lib/netstandard2.0/AsmResolver.PE.File.dll",
+        "lib/netstandard2.0/AsmResolver.PE.File.xml"
+      ]
+    },
+    "Iced/1.18.0": {
+      "sha512": "G60lZOvbvqttA+SBSv/yY6/wUboXKJlkffhSNR9iOrx0M5gpcK1TRr6xrFR+qAhqIAhvrsPF1jkn9fYb4lEufQ==",
+      "type": "package",
+      "path": "iced/1.18.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.txt",
+        "iced.1.18.0.nupkg.sha512",
+        "iced.nuspec",
+        "lib/net45/Iced.dll",
+        "lib/net45/Iced.xml",
+        "lib/netstandard2.0/Iced.dll",
+        "lib/netstandard2.0/Iced.xml",
+        "lib/netstandard2.1/Iced.dll",
+        "lib/netstandard2.1/Iced.xml",
+        "logo.png"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net6.0": [
+      "AsmResolver >= 5.3.0",
+      "AsmResolver.PE >= 5.3.0",
+      "AsmResolver.PE.File >= 5.3.0",
+      "Iced >= 1.18.0"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\radon\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "C:\\Users\\radon\\Desktop\\veprot-native\\VeProt-Native\\VeProt-Native.csproj",
+      "projectName": "VeProt-Native",
+      "projectPath": "C:\\Users\\radon\\Desktop\\veprot-native\\VeProt-Native\\VeProt-Native.csproj",
+      "packagesPath": "C:\\Users\\radon\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\radon\\Desktop\\veprot-native\\VeProt-Native\\obj\\",
+      "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
+      "configFilePaths": [
+        "C:\\Users\\radon\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+      ],
+      "originalTargetFrameworks": [
+        "net6.0"
+      ],
+      "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net6.0": {
+          "targetAlias": "net6.0",
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      }
+    },
+    "frameworks": {
+      "net6.0": {
+        "targetAlias": "net6.0",
+        "dependencies": {
+          "AsmResolver": {
+            "target": "Package",
+            "version": "[5.3.0, )"
+          },
+          "AsmResolver.PE": {
+            "target": "Package",
+            "version": "[5.3.0, )"
+          },
+          "AsmResolver.PE.File": {
+            "target": "Package",
+            "version": "[5.3.0, )"
+          },
+          "Iced": {
+            "target": "Package",
+            "version": "[1.18.0, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\7.0.203\\RuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}

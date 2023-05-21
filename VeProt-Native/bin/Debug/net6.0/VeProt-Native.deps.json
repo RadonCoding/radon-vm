@@ -1,0 +1,95 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v6.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v6.0": {
+      "VeProt-Native/1.0.0": {
+        "dependencies": {
+          "AsmResolver": "5.3.0",
+          "AsmResolver.PE": "5.3.0",
+          "AsmResolver.PE.File": "5.3.0",
+          "Iced": "1.18.0"
+        },
+        "runtime": {
+          "VeProt-Native.dll": {}
+        }
+      },
+      "AsmResolver/5.3.0": {
+        "runtime": {
+          "lib/net6.0/AsmResolver.dll": {
+            "assemblyVersion": "5.3.0.0",
+            "fileVersion": "5.3.0.0"
+          }
+        }
+      },
+      "AsmResolver.PE/5.3.0": {
+        "dependencies": {
+          "AsmResolver.PE.File": "5.3.0"
+        },
+        "runtime": {
+          "lib/net6.0/AsmResolver.PE.dll": {
+            "assemblyVersion": "5.3.0.0",
+            "fileVersion": "5.3.0.0"
+          }
+        }
+      },
+      "AsmResolver.PE.File/5.3.0": {
+        "dependencies": {
+          "AsmResolver": "5.3.0"
+        },
+        "runtime": {
+          "lib/net6.0/AsmResolver.PE.File.dll": {
+            "assemblyVersion": "5.3.0.0",
+            "fileVersion": "5.3.0.0"
+          }
+        }
+      },
+      "Iced/1.18.0": {
+        "runtime": {
+          "lib/netstandard2.1/Iced.dll": {
+            "assemblyVersion": "1.18.0.0",
+            "fileVersion": "1.18.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "VeProt-Native/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "AsmResolver/5.3.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Gb6KzD1+c8TNZkA1Qw/CqmlN01S3jkE+ivLZos02cvh6KHCAiPUWQ5y25ZFg/3Gh/KUtt0lAEyFc9rOsUauF3g==",
+      "path": "asmresolver/5.3.0",
+      "hashPath": "asmresolver.5.3.0.nupkg.sha512"
+    },
+    "AsmResolver.PE/5.3.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-DxVSiiLzHRHY9gIlZ00d1QtlfLSHn1evaVfLkaCG+5UWZ0EbU0+z2i+nq/fqK7FUxYatGBLrE9v0ON+XoaR5qQ==",
+      "path": "asmresolver.pe/5.3.0",
+      "hashPath": "asmresolver.pe.5.3.0.nupkg.sha512"
+    },
+    "AsmResolver.PE.File/5.3.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ougqxlV4vCTEeS5cxXBishgGd+LEvE51Kd4WAjflASHKMto8FnQphD2WpYSYyzBEXx5D/uEQkK8on5mTIWWsig==",
+      "path": "asmresolver.pe.file/5.3.0",
+      "hashPath": "asmresolver.pe.file.5.3.0.nupkg.sha512"
+    },
+    "Iced/1.18.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-G60lZOvbvqttA+SBSv/yY6/wUboXKJlkffhSNR9iOrx0M5gpcK1TRr6xrFR+qAhqIAhvrsPF1jkn9fYb4lEufQ==",
+      "path": "iced/1.18.0",
+      "hashPath": "iced.1.18.0.nupkg.sha512"
+    }
+  }
+}
