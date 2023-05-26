@@ -7,6 +7,7 @@ using Iced.Intel;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using VeProt_Native.Protections;
 
 namespace VeProt_Native {
     internal class Compiler {
@@ -263,8 +264,7 @@ namespace VeProt_Native {
 
             foreach (var type in ass.GetTypes().Where(x => x.GetInterface("IProtection") != null)) {
                 var instance = Activator.CreateInstance(type);
-                MethodInfo? info = type.GetMethod("Execute");
-                info?.Invoke(instance, new object[] { this, oldSectionRVA, newSectionRVA, code });
+                ((IProtection)instance!).Execute(this, oldSectionRVA, newSectionRVA, code);
             }
 
             Assemble(ref code, oldSectionRVA, oldSectionSize, newSectionRVA);
