@@ -56,82 +56,85 @@ namespace VeProt_Native.Protections {
 
                 switch (instr.OpCode.Code.Mnemonic()) {
                     case Mnemonic.Mov:
-                        if (instr.Op0Kind == OpKind.Register) {
+                        if (instr.Op0Kind == OpKind.Register && instr.Op1Kind.IsImmediate()) {
                             var offsets = decoder.GetConstantOffsets(instr);
-
-                            if (!offsets.HasImmediate) continue;
-
                             var size = offsets.ImmediateSize;
 
-                            Random rand = new Random();
+                            if (size == 1 && !instr.Op0Register.IsGPR8()) break;
+                            if (size == 2 && !instr.Op0Register.IsGPR16()) break;
+                            if (size == 4 && !instr.Op0Register.IsGPR32()) break;
+                            if (size == 8 && !instr.Op0Register.IsGPR64()) break;
 
-                            dynamic add = 0;
-                            dynamic xor = 0;
-                            byte rot = (byte)rand.Next(1, 255);
+                            //Random rand = new Random();
 
-                            int index = offset + offsets.ImmediateOffset;
+                            //dynamic add = 0;
+                            //dynamic xor = 0;
+                            //byte rot = (byte)rand.Next(1, 255);
 
-                            switch (size) {
-                                case 1: {
-                                        add = (byte)rand.Next(1, byte.MaxValue);
-                                        xor = (byte)rand.Next(1, byte.MaxValue);
+                            //int index = offset + offsets.ImmediateOffset;
 
-                                        byte value = code[index];
-                                        value = RotR8(value, rot);
-                                        value ^= (byte)xor;
-                                        value -= (byte)add;
-                                        value = (byte)~value;
+                            //switch (size) {
+                            //    case 1: {
+                            //            add = (byte)rand.Next(byte.MinValue, byte.MaxValue);
+                            //            xor = (byte)rand.Next(byte.MinValue, byte.MaxValue);
 
-                                        code[index] = value;
-                                        break;
-                                    }
-                                case 2: {
-                                        add = (short)rand.Next(1, short.MaxValue);
-                                        xor = (short)rand.Next(1, short.MaxValue);
+                            //            byte value = code[index];
+                            //            value = RotR8(value, rot);
+                            //            value ^= (byte)xor;
+                            //            value -= (byte)add;
+                            //            value = (byte)~value;
 
-                                        short value = BitConverter.ToInt16(code, index);
-                                        value = RotR16(value, rot);
-                                        value ^= (short)xor;
-                                        value -= (short)add;
-                                        value = (short)~value;
-                                        BitConverter.GetBytes(value).CopyTo(code, index);
-                                        break;
-                                    }
-                                case 4: {
-                                        add = rand.Next(1, int.MaxValue);
-                                        xor = rand.Next(1, int.MaxValue);
+                            //            code[index] = value;
+                            //            break;
+                            //        }
+                            //    case 2: {
+                            //            add = (short)rand.Next(short.MinValue, short.MaxValue);
+                            //            xor = (short)rand.Next(short.MinValue, short.MaxValue);
 
-                                        int value = BitConverter.ToInt32(code, index);
-                                        value = RotR32(value, rot);
-                                        value ^= xor;
-                                        value -= add;
-                                        value = ~value;
-                                        BitConverter.GetBytes(value).CopyTo(code, index);
-                                        break;
-                                    }
-                                case 8: {
-                                        add = rand.Next(1, int.MaxValue);
-                                        xor = rand.Next(1, int.MaxValue);
+                            //            short value = BitConverter.ToInt16(code, index);
+                            //            value = RotR16(value, rot);
+                            //            value ^= (short)xor;
+                            //            value -= (short)add;
+                            //            value = (short)~value;
+                            //            BitConverter.GetBytes(value).CopyTo(code, index);
+                            //            break;
+                            //        }
+                            //    case 4: {
+                            //            add = rand.Next(int.MinValue, int.MaxValue);
+                            //            xor = rand.Next(int.MinValue, int.MaxValue);
 
-                                        long value = BitConverter.ToInt64(code, index);
-                                        value = RotR64(value, rot);
-                                        value ^= xor;
-                                        value -= add;
-                                        value = ~value;
-                                        BitConverter.GetBytes(value).CopyTo(code, index);
-                                        break;
-                                    }
-                            }
+                            //            int value = BitConverter.ToInt32(code, index);
+                            //            value = RotR32(value, rot);
+                            //            value ^= xor;
+                            //            value -= add;
+                            //            value = ~value;
+                            //            BitConverter.GetBytes(value).CopyTo(code, index);
+                            //            break;
+                            //        }
+                            //    case 8: {
+                            //            add = rand.Next(int.MinValue, int.MaxValue);
+                            //            xor = rand.Next(int.MinValue, int.MaxValue);
 
-                            dynamic reg = ToAsmRegister(instr.Op0Register);
+                            //            long value = BitConverter.ToInt64(code, index);
+                            //            value = RotR64(value, rot);
+                            //            value ^= xor;
+                            //            value -= add;
+                            //            value = ~value;
+                            //            BitConverter.GetBytes(value).CopyTo(code, index);
+                            //            break;
+                            //        }
+                            //}
+
+                            //dynamic reg = ToAsmRegister(instr.Op0Register);
 
                             Assembler asm = new Assembler(64);
-                            asm.pushf();
-                            asm.not(reg);
-                            asm.add(reg, add);
-                            asm.xor(reg, xor);
-                            asm.rol(reg, rot);
-                            asm.popf();
+                            //asm.pushf();
+                            //asm.not(reg);
+                            //asm.add(reg, add);
+                            //asm.xor(reg, xor);
+                            //asm.rol(reg, rot);
+                            //asm.popf();
+                            asm.nop();
 
 #if DEBUG
                             Console.Write("[*] Mutating: ");
@@ -156,7 +159,7 @@ namespace VeProt_Native.Protections {
                             using (var ms = new MemoryStream()) {
                                 asm.Assemble(new StreamCodeWriter(ms), instr.NextIP);
                                 byte[] assembled = ms.ToArray();
-                                compiler.Insert(oldSectionRVA, offset + instr.Length, assembled);
+                                compiler.Insert(offset + instr.Length, assembled);
                             }
                         }
                         break;

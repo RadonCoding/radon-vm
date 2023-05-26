@@ -60,6 +60,10 @@
             "Iced": {
               "target": "Package",
               "version": "[1.18.0, )"
+            },
+            "System.Collections.Specialized": {
+              "target": "Package",
+              "version": "[4.3.0, )"
             }
           },
           "imports": [
