@@ -18,3 +18,4 @@ C:\Users\radon\Desktop\veprot-native\VeProt-Native\obj\Debug\net6.0\refint\VePro
 C:\Users\radon\Desktop\veprot-native\VeProt-Native\obj\Debug\net6.0\VeProt-Native.pdb
 C:\Users\radon\Desktop\veprot-native\VeProt-Native\obj\Debug\net6.0\VeProt-Native.genruntimeconfig.cache
 C:\Users\radon\Desktop\veprot-native\VeProt-Native\obj\Debug\net6.0\ref\VeProt-Native.dll
+C:\Users\radon\Desktop\veprot-native\VeProt-Native\bin\Debug\net6.0\Microsoft.DiaSymReader.dll

@@ -29,11 +29,11 @@ namespace VeProt_Native.Protections {
         }
 
         private uint Rotr32(uint value, int shift) {
-            return (uint)((value >> shift) | (value << (32 - shift)));
+            return (value >> shift) | (value << (32 - shift));
         }
 
         private ulong Rotr64(ulong value, int shift) {
-            return (ulong)((value >> shift) | (value << (64 - shift)));
+            return (value >> shift) | (value << (64 - shift));
         }
 
         public void Execute(Compiler compiler, uint oldSectionRVA, uint newSectionRVA, byte[] code) {
@@ -49,9 +49,6 @@ namespace VeProt_Native.Protections {
                     instrs.Add(instr);
                 }
             }
-
-            var formatter = new NasmFormatter();
-            var output = new StringOutput();
 
             foreach (var instr in instrs) {
                 int offset = (int)(instr.IP - oldSectionRVA);
@@ -113,25 +110,6 @@ namespace VeProt_Native.Protections {
                             asm.xor(reg, xor);
                             asm.rol(reg, rot);
                             asm.popf();
-#if DEBUG
-                            Console.Write("[*] Mutating: ");
-
-                            formatter.Format(instr, output);
-                            Console.Write("0x{0}", (compiler.Image.ImageBase + instr.IP).ToString("X16"));
-                            Console.Write(", ");
-
-                            Console.Write("new byte[] {");
-                            Console.Write(" ");
-
-                            for (int i = 0; i < instr.Length; i++) {
-                                Console.Write("0x{0}", code[offset + i].ToString("X2"));
-                                Console.Write(" ");
-                            }
-                            Console.Write("}");
-
-                            Console.Write(", ");
-                            Console.WriteLine(output.ToStringAndReset());
-#endif
 
                             using (var ms = new MemoryStream()) {
                                 asm.Assemble(new StreamCodeWriter(ms), instr.NextIP);

@@ -1,20 +1,19 @@
 ﻿using AsmResolver;
 using AsmResolver.PE;
+using AsmResolver.PE.Code;
 using AsmResolver.PE.File;
 using AsmResolver.PE.File.Headers;
 using AsmResolver.PE.Relocations;
 using Iced.Intel;
 using System.Diagnostics;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using VeProt_Native.Protections;
 
 namespace VeProt_Native {
     internal class Compiler {
-        public const int HEXBYTES_COLUMN_BYTE_LENGTH = 10;
-
         public PEFile File { get { return _file; } }
         public IPEImage Image { get { return _image; } }
+        public InjectHelper Injector { get { return _injector; } }
 
         private string _filename;
 
@@ -22,17 +21,27 @@ namespace VeProt_Native {
         private IPEImage _image;
 
         private List<Adjustment> _adjustments;
+        private List<Replacement> _replacements;
 
         private Dictionary<uint, uint> _newOffsets;
         private Dictionary<uint, ulong> _references;
+
+        private InjectHelper _injector;
 
         public Compiler(string filename) {
             _filename = filename;
             _file = PEFile.FromFile(filename);
             _image = PEImage.FromFile(_file);
             _adjustments = new List<Adjustment>();
+            _replacements = new List<Replacement>();
             _newOffsets = new Dictionary<uint, uint>();
             _references = new Dictionary<uint, ulong>();
+
+            PESection inject = new PESection(".veprot0", SectionFlags.ContentCode | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,
+                new DataSegment(new byte[InjectHelper.SECTION_SIZE]));
+            _file.Sections.Add(inject);
+            _file.UpdateHeaders();
+            _injector = new InjectHelper(inject.Rva);
         }
 
         private List<Instruction> GetInstructions(byte[] code, ulong ip) {
@@ -54,15 +63,12 @@ namespace VeProt_Native {
         private unsafe void Assemble(ref byte[] code, uint oldSectionRVA, uint oldSectionSize, uint newSectionRVA) {
             var oldInstrs = GetInstructions(code, oldSectionRVA);
 
-            foreach (var instr in oldInstrs) {
-                uint offset = (uint)(instr.IP - oldSectionRVA);
-                _newOffsets[offset] = offset;
-            }
-
             CalcReferences(oldInstrs, oldSectionRVA, oldSectionSize, newSectionRVA);
 
-            code = ApplyAdjustments(code);
-            code = Reassemble(code, newSectionRVA);
+            ApplyReplacements(ref code);
+            ApplyAdjustments(ref code);
+
+            Reassemble(ref code, newSectionRVA);
 
             var newInstrs = GetInstructions(code, newSectionRVA);
             FindOffsets(oldInstrs, newInstrs);
@@ -72,6 +78,7 @@ namespace VeProt_Native {
             foreach (var instr in instrs) {
                 if (instr.IsIPRelative()) {
                     uint src = (uint)(instr.IP - oldSectionRVA);
+
                     ulong dst = instr.IsIPRelativeMemoryOperand ? instr.IPRelativeMemoryAddress : instr.NearBranchTarget;
 
                     if (dst != 0) {
@@ -83,10 +90,10 @@ namespace VeProt_Native {
                             dst += newSectionRVA;
 
                             // Calculate dst as a offset and check if it's before or after the adjustment
-                            foreach (var adjustment in _adjustments.OrderBy(x => x.Offset)) {
-                                if (offset >= adjustment.Offset) {
+                            foreach (var adjustment in _adjustments) {
+                                if ((uint)adjustment.Offset < offset) {
                                     // If the target address is after the adjustment
-                                    dst += adjustment.Displacement;
+                                    dst += (uint)adjustment.Bytes.Length;
                                 }
                             }
                         }
@@ -107,7 +114,7 @@ namespace VeProt_Native {
                 foreach (var adjustment in _adjustments.Where(x => x.Offset == offset)) {
                     int skip = 0;
 
-                    while (skip < adjustment.Displacement) {
+                    while (skip < adjustment.Bytes.Length) {
                         skip += newInstrs[j++].Length;
                     }
                 }
@@ -123,19 +130,25 @@ namespace VeProt_Native {
             }
         }
 
-        private byte[] ApplyAdjustments(byte[] code) {
-            var adjusted = code.ToList();
-
-            uint displacement = 0;
-
-            foreach (var adjustment in _adjustments.OrderBy(x => x.Offset)) {
-                adjusted.InsertRange((int)(adjustment.Offset + displacement), adjustment.Bytes);
-                displacement += adjustment.Displacement;
+        private void ApplyReplacements(ref byte[] code) {
+            foreach (var replacement in _replacements) {
+                Array.Copy(replacement.Bytes, 0, code, replacement.Offset, replacement.Bytes.Length);
             }
-            return adjusted.ToArray();
         }
 
-        private byte[] Reassemble(byte[] code, uint ip) {
+        private void ApplyAdjustments(ref byte[] code) {
+            var adjusted = code.ToList();
+
+            int displacement = 0;
+
+            foreach (var adjustment in _adjustments.OrderBy(x => x.Offset)) {
+                adjusted.InsertRange(adjustment.Offset + displacement, adjustment.Bytes);
+                displacement += adjustment.Bytes.Length;
+            }
+            code = adjusted.ToArray();
+        }
+
+        private void Reassemble(ref byte[] code, uint ip) {
             var instrs = GetInstructions(code, ip);
 
             for (int i = 0; i < instrs.Count; i++) {
@@ -145,27 +158,30 @@ namespace VeProt_Native {
                     uint src = (uint)(instr.IP - ip);
 
                     foreach (var adjustment in _adjustments.Where(x => x.Offset < src)) {
-                        src -= adjustment.Displacement;
+                        src -= (uint)adjustment.Bytes.Length;
                     }
-                    ulong dst = _references[src];
 
-                    if (instr.IsIPRelativeMemoryOperand) {
-                        if (instr.MemoryDisplSize == 8) {
-                            instr.MemoryDisplacement64 = dst;
+                    if (_references.ContainsKey(src)) {
+                        ulong dst = _references[src];
+
+                        if (instr.IsIPRelativeMemoryOperand) {
+                            if (instr.MemoryDisplSize == 8) {
+                                instr.MemoryDisplacement64 = dst;
+                            } else {
+                                instr.MemoryDisplacement32 = (uint)dst;
+                            }
                         } else {
-                            instr.MemoryDisplacement32 = (uint)dst;
-                        }
-                    } else {
-                        switch (instr.Op0Kind) {
-                            case OpKind.NearBranch16:
-                                instr.NearBranch16 = (ushort)dst;
-                                break;
-                            case OpKind.NearBranch32:
-                                instr.NearBranch32 = (uint)dst;
-                                break;
-                            case OpKind.NearBranch64:
-                                instr.NearBranch64 = dst;
-                                break;
+                            switch (instr.Op0Kind) {
+                                case OpKind.NearBranch16:
+                                    instr.NearBranch16 = (ushort)dst;
+                                    break;
+                                case OpKind.NearBranch32:
+                                    instr.NearBranch32 = (uint)dst;
+                                    break;
+                                case OpKind.NearBranch64:
+                                    instr.NearBranch64 = dst;
+                                    break;
+                            }
                         }
                     }
                 }
@@ -178,15 +194,11 @@ namespace VeProt_Native {
             if (!BlockEncoder.TryEncode(64, block, out string? error, out _)) {
                 throw new Exception(error);
             }
-            return writer.ToArray();
+            code = writer.ToArray();
         }
 
         private unsafe void FixRelocs(byte[] image, PESection oldSection, PESection newSection) {
             foreach (var reloc in _image.Relocations) {
-                uint oep = _file.OptionalHeader.AddressOfEntryPoint;
-
-                if (!(oep >= oldSection.Rva && oep < oldSection.Rva + oldSection.GetVirtualSize())) continue;
-
                 fixed (byte* pImage = image) {
                     uint value = (uint)(*(ulong*)(pImage + reloc.Location.Offset) - _image.ImageBase);
                     var targetSection = _file.GetSectionContainingRva(value);
@@ -195,14 +207,6 @@ namespace VeProt_Native {
 
                     uint offset = value - targetSection.Rva;
                     ulong newTarget = _image.ImageBase + newSection.Rva + _newOffsets[offset];
-
-#if DEBUG
-                    Console.WriteLine();
-
-                    Console.WriteLine("[*] Target section: {0}", targetSection.Name);
-                    Console.WriteLine("[*] Reloc address: 0x{0}", (_image.ImageBase + reloc.Location.Rva).ToString("X16"));
-                    Console.WriteLine("[*] Target address: 0x{0}", (_image.ImageBase + value).ToString("X16"));
-#endif
 
                     switch (reloc.Type) {
                         case RelocationType.HighLow: {
@@ -249,7 +253,15 @@ namespace VeProt_Native {
         }
 
         public void Insert(int offset, byte[] insertion) {
-            _adjustments.Add(new Adjustment((uint)offset, (uint)insertion.Length, insertion));
+            _adjustments.Add(new Adjustment(offset, insertion));
+        }
+
+        public void Replace(int offset, int replace, byte[] insertion) {
+            _replacements.Add(new Replacement(offset, replace, insertion.Take(replace).ToArray()));
+
+            if (insertion.Length > replace) {
+                Insert(offset + replace, insertion.Skip(replace).ToArray());
+            }
         }
 
         private unsafe void Process(PESection oldSection) {
@@ -260,16 +272,12 @@ namespace VeProt_Native {
             uint oldSectionSize = oldSection.GetVirtualSize();
             uint newSectionRVA = (last.Rva + last.GetVirtualSize()).Align(_file.OptionalHeader.SectionAlignment);
 
-            var ass = GetType().Assembly;
-
-            foreach (var type in ass.GetTypes().Where(x => x.GetInterface("IProtection") != null)) {
-                var instance = Activator.CreateInstance(type);
-                ((IProtection)instance!).Execute(this, oldSectionRVA, newSectionRVA, code);
-            }
+            new Mutation().Execute(this, oldSectionRVA, newSectionRVA, code);
+            //new Imports().Execute(this, oldSectionRVA, newSectionRVA, code);
 
             Assemble(ref code, oldSectionRVA, oldSectionSize, newSectionRVA);
 
-            var newSection = new PESection($".veprot0",
+            var newSection = new PESection(".veprot1",
                 SectionFlags.ContentCode | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,
                 new DataSegment(code));
             _file.Sections.Add(newSection);
@@ -316,6 +324,9 @@ namespace VeProt_Native {
         }
 
         public void Save() {
+            var inject = _file.GetSectionContainingRva(_injector.Rva);
+            inject.Contents = new DataSegment(_injector.Bytes.ToArray());
+
             _file.Write(_filename);
         }
 
@@ -326,13 +337,23 @@ namespace VeProt_Native {
         }
 
         sealed class Adjustment {
-            public uint Offset { get; set; }
-            public uint Displacement { get; }
+            public int Offset { get; set; }
             public byte[] Bytes { get; }
 
-            public Adjustment(uint offset, uint displacement, byte[] bytes) {
+            public Adjustment(int offset, byte[] bytes) {
                 Offset = offset;
-                Displacement = displacement;
+                Bytes = bytes;
+            }
+        }
+
+        sealed class Replacement {
+            public int Offset { get; set; }
+            public int Replace { get; set; }
+            public byte[] Bytes { get; }
+
+            public Replacement(int offset, int replace, byte[] bytes) {
+                Offset = offset;
+                Replace = replace;
                 Bytes = bytes;
             }
         }

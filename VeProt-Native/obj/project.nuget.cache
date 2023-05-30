@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "i3ts2QEomA9NEDyhCwGyiE+XQkgejZay/neJsravjQw4kWu6u3UrWdC9d3Ak1UUx1DeOb6dDaEklxZWNLGPW8g==",
+  "dgSpecHash": "4UBh+U8ywWFrI71BYqTJ1yGQRiYsHDq0KZ8l/0Y8FCMfwxJvXuYQuSiAteoIVKunziaE8sWJekNTvYPVYKjm5w==",
   "success": true,
   "projectFilePath": "C:\\Users\\radon\\Desktop\\veprot-native\\VeProt-Native\\VeProt-Native.csproj",
   "expectedPackageFiles": [
@@ -8,6 +8,8 @@
     "C:\\Users\\radon\\.nuget\\packages\\asmresolver.pe\\5.3.0\\asmresolver.pe.5.3.0.nupkg.sha512",
     "C:\\Users\\radon\\.nuget\\packages\\asmresolver.pe.file\\5.3.0\\asmresolver.pe.file.5.3.0.nupkg.sha512",
     "C:\\Users\\radon\\.nuget\\packages\\iced\\1.18.0\\iced.1.18.0.nupkg.sha512",
+    "C:\\Users\\radon\\.nuget\\packages\\microsoft.diasymreader\\2.0.0\\microsoft.diasymreader.2.0.0.nupkg.sha512",
+    "C:\\Users\\radon\\.nuget\\packages\\microsoft.diasymreader.native\\1.7.0\\microsoft.diasymreader.native.1.7.0.nupkg.sha512",
     "C:\\Users\\radon\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
     "C:\\Users\\radon\\.nuget\\packages\\microsoft.netcore.targets\\1.1.0\\microsoft.netcore.targets.1.1.0.nupkg.sha512",
     "C:\\Users\\radon\\.nuget\\packages\\system.collections.nongeneric\\4.3.0\\system.collections.nongeneric.4.3.0.nupkg.sha512",

@@ -13,4 +13,7 @@
     <SourceRoot Include="C:\Users\radon\.nuget\packages\" />
     <SourceRoot Include="C:\Program Files (x86)\Microsoft Visual Studio\Shared\NuGetPackages\" />
   </ItemGroup>
+  <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Import Project="$(NuGetPackageRoot)microsoft.diasymreader.native\1.7.0\build\Microsoft.DiaSymReader.Native.props" Condition="Exists('$(NuGetPackageRoot)microsoft.diasymreader.native\1.7.0\build\Microsoft.DiaSymReader.Native.props')" />
+  </ImportGroup>
 </Project>

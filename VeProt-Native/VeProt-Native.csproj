@@ -14,7 +14,13 @@
     <PackageReference Include="AsmResolver.PE" Version="5.3.0" />
     <PackageReference Include="AsmResolver.PE.File" Version="5.3.0" />
     <PackageReference Include="Iced" Version="1.18.0" />
+    <PackageReference Include="Microsoft.DiaSymReader" Version="2.0.0" />
+    <PackageReference Include="Microsoft.DiaSymReader.Native" Version="1.7.0" />
     <PackageReference Include="System.Collections.Specialized" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VeProt-Native.Runtime\VeProt-Native.Runtime.vcxproj" />
   </ItemGroup>
 
 </Project>

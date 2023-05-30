@@ -12,7 +12,10 @@
           "AsmResolver.PE": "5.3.0",
           "AsmResolver.PE.File": "5.3.0",
           "Iced": "1.18.0",
-          "System.Collections.Specialized": "4.3.0"
+          "Microsoft.DiaSymReader": "2.0.0",
+          "Microsoft.DiaSymReader.Native": "1.7.0",
+          "System.Collections.Specialized": "4.3.0",
+          "VeProt-Native.Runtime": "1.0.0"
         },
         "runtime": {
           "VeProt-Native.dll": {}
@@ -56,6 +59,15 @@
           }
         }
       },
+      "Microsoft.DiaSymReader/2.0.0": {
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.DiaSymReader.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.0.23.22804"
+          }
+        }
+      },
+      "Microsoft.DiaSymReader.Native/1.7.0": {},
       "Microsoft.NETCore.Platforms/1.1.0": {},
       "Microsoft.NETCore.Targets/1.1.0": {},
       "System.Collections.NonGeneric/4.3.0": {
@@ -222,6 +234,20 @@
       "sha512": "sha512-G60lZOvbvqttA+SBSv/yY6/wUboXKJlkffhSNR9iOrx0M5gpcK1TRr6xrFR+qAhqIAhvrsPF1jkn9fYb4lEufQ==",
       "path": "iced/1.18.0",
       "hashPath": "iced.1.18.0.nupkg.sha512"
+    },
+    "Microsoft.DiaSymReader/2.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-QcZrCETsBJqy/vQpFtJc+jSXQ0K5sucQ6NUFbTNVHD4vfZZOwjZ/3sBzczkC4DityhD3AVO/+K/+9ioLs1AgRA==",
+      "path": "microsoft.diasymreader/2.0.0",
+      "hashPath": "microsoft.diasymreader.2.0.0.nupkg.sha512"
+    },
+    "Microsoft.DiaSymReader.Native/1.7.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-vIzndj0MoWW2Mp/iztUSKvmR9vZTqOVQ6PBvwA57+CDoiz7eUMU15rrAX+/QA0bkmwQ08GRibFBB9LNOl0EiBA==",
+      "path": "microsoft.diasymreader.native/1.7.0",
+      "hashPath": "microsoft.diasymreader.native.1.7.0.nupkg.sha512"
     },
     "Microsoft.NETCore.Platforms/1.1.0": {
       "type": "package",

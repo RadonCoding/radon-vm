@@ -60,6 +60,51 @@
           }
         }
       },
+      "Microsoft.DiaSymReader/2.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/Microsoft.DiaSymReader.dll": {
+            "related": ".pdb;.xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Microsoft.DiaSymReader.dll": {
+            "related": ".pdb;.xml"
+          }
+        }
+      },
+      "Microsoft.DiaSymReader.Native/1.7.0": {
+        "type": "package",
+        "build": {
+          "build/Microsoft.DiaSymReader.Native.props": {}
+        },
+        "runtimeTargets": {
+          "runtimes/win-x64/native/Microsoft.DiaSymReader.Native.amd64.dll": {
+            "assetType": "native",
+            "rid": "win-x64"
+          },
+          "runtimes/win-x86/native/Microsoft.DiaSymReader.Native.x86.dll": {
+            "assetType": "native",
+            "rid": "win-x86"
+          },
+          "runtimes/win/native/Microsoft.DiaSymReader.Native.amd64.dll": {
+            "assetType": "native",
+            "rid": "win"
+          },
+          "runtimes/win/native/Microsoft.DiaSymReader.Native.arm.dll": {
+            "assetType": "native",
+            "rid": "win"
+          },
+          "runtimes/win/native/Microsoft.DiaSymReader.Native.x86.dll": {
+            "assetType": "native",
+            "rid": "win"
+          },
+          "runtimes/win8-arm/native/Microsoft.DiaSymReader.Native.arm.dll": {
+            "assetType": "native",
+            "rid": "win8-arm"
+          }
+        }
+      },
       "Microsoft.NETCore.Platforms/1.1.0": {
         "type": "package",
         "compile": {
@@ -319,6 +364,15 @@
             "related": ".xml"
           }
         }
+      },
+      "VeProt-Native.Runtime/1.0.0": {
+        "type": "project",
+        "compile": {
+          "bin/placeholder/VeProt-Native.Runtime.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/VeProt-Native.Runtime.dll": {}
+        }
       }
     }
   },
@@ -391,6 +445,39 @@
         "lib/netstandard2.1/Iced.dll",
         "lib/netstandard2.1/Iced.xml",
         "logo.png"
+      ]
+    },
+    "Microsoft.DiaSymReader/2.0.0": {
+      "sha512": "QcZrCETsBJqy/vQpFtJc+jSXQ0K5sucQ6NUFbTNVHD4vfZZOwjZ/3sBzczkC4DityhD3AVO/+K/+9ioLs1AgRA==",
+      "type": "package",
+      "path": "microsoft.diasymreader/2.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "Icon.png",
+        "lib/netstandard2.0/Microsoft.DiaSymReader.dll",
+        "lib/netstandard2.0/Microsoft.DiaSymReader.pdb",
+        "lib/netstandard2.0/Microsoft.DiaSymReader.xml",
+        "microsoft.diasymreader.2.0.0.nupkg.sha512",
+        "microsoft.diasymreader.nuspec"
+      ]
+    },
+    "Microsoft.DiaSymReader.Native/1.7.0": {
+      "sha512": "vIzndj0MoWW2Mp/iztUSKvmR9vZTqOVQ6PBvwA57+CDoiz7eUMU15rrAX+/QA0bkmwQ08GRibFBB9LNOl0EiBA==",
+      "type": "package",
+      "path": "microsoft.diasymreader.native/1.7.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "build/Microsoft.DiaSymReader.Native.props",
+        "microsoft.diasymreader.native.1.7.0.nupkg.sha512",
+        "microsoft.diasymreader.native.nuspec",
+        "runtimes/win-x64/native/Microsoft.DiaSymReader.Native.amd64.dll",
+        "runtimes/win-x86/native/Microsoft.DiaSymReader.Native.x86.dll",
+        "runtimes/win/native/Microsoft.DiaSymReader.Native.amd64.dll",
+        "runtimes/win/native/Microsoft.DiaSymReader.Native.arm.dll",
+        "runtimes/win/native/Microsoft.DiaSymReader.Native.x86.dll",
+        "runtimes/win8-arm/native/Microsoft.DiaSymReader.Native.arm.dll"
       ]
     },
     "Microsoft.NETCore.Platforms/1.1.0": {
@@ -1464,6 +1551,11 @@
         "system.threading.tasks.4.3.0.nupkg.sha512",
         "system.threading.tasks.nuspec"
       ]
+    },
+    "VeProt-Native.Runtime/1.0.0": {
+      "type": "project",
+      "path": "../VeProt-Native.Runtime/VeProt-Native.Runtime.vcxproj",
+      "msbuildProject": "../VeProt-Native.Runtime/VeProt-Native.Runtime.vcxproj"
     }
   },
   "projectFileDependencyGroups": {
@@ -1472,7 +1564,10 @@
       "AsmResolver.PE >= 5.3.0",
       "AsmResolver.PE.File >= 5.3.0",
       "Iced >= 1.18.0",
-      "System.Collections.Specialized >= 4.3.0"
+      "Microsoft.DiaSymReader >= 2.0.0",
+      "Microsoft.DiaSymReader.Native >= 1.7.0",
+      "System.Collections.Specialized >= 4.3.0",
+      "VeProt-Native.Runtime >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -1507,7 +1602,11 @@
       "frameworks": {
         "net6.0": {
           "targetAlias": "net6.0",
-          "projectReferences": {}
+          "projectReferences": {
+            "C:\\Users\\radon\\Desktop\\veprot-native\\VeProt-Native.Runtime\\VeProt-Native.Runtime.vcxproj": {
+              "projectPath": "C:\\Users\\radon\\Desktop\\veprot-native\\VeProt-Native.Runtime\\VeProt-Native.Runtime.vcxproj"
+            }
+          }
         }
       },
       "warningProperties": {
@@ -1535,6 +1634,14 @@
           "Iced": {
             "target": "Package",
             "version": "[1.18.0, )"
+          },
+          "Microsoft.DiaSymReader": {
+            "target": "Package",
+            "version": "[2.0.0, )"
+          },
+          "Microsoft.DiaSymReader.Native": {
+            "target": "Package",
+            "version": "[1.7.0, )"
           },
           "System.Collections.Specialized": {
             "target": "Package",
