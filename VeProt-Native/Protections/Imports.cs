@@ -1,5 +1,6 @@
 ﻿using Iced.Intel;
 using System.Runtime.InteropServices;
+using static Iced.Intel.AssemblerRegisters;
 
 namespace VeProt_Native.Protections {
     internal class Imports : IProtection {
@@ -37,22 +38,29 @@ namespace VeProt_Native.Protections {
                         default:
                             continue;
                     }
+                    
+                    // Normalize the target address
+                    target += newSectionRVA - oldSectionRVA;
 
                     foreach (var import in compiler.Image.Imports) {
                         foreach (var symbol in import.Symbols) {
                             if (symbol.AddressTableEntry?.Rva == target) {
-                                int func = Runtime.Hash(Marshal.StringToHGlobalAnsi(symbol.Name));
-                                int lib = Runtime.Hash(Marshal.StringToHGlobalAnsi(import.Name));
+                                uint func = Runtime.Hash(Marshal.StringToHGlobalAnsi(symbol.Name));
+                                uint lib = Runtime.Hash(Marshal.StringToHGlobalAnsi(import.Name));
 
-                                Assembler asm = new Assembler(64);
-                                asm.push(lib);
-                                asm.push(func);
-                                asm.call(resolve);
+                                Assembler ass = new Assembler(64);
+                                //ass.mov(ecx, lib);
+                                //ass.mov(edx, func);
+                                //ass.call(resolve);
+                                //ass.call(rax);
+                                ass.nop();
 
                                 using (var ms = new MemoryStream()) {
-                                    asm.Assemble(new StreamCodeWriter(ms), instr.IP);
+                                    //ass.Assemble(new StreamCodeWriter(ms), instr.IP);
+                                    ass.Assemble(new StreamCodeWriter(ms), instr.NextIP);
                                     byte[] assembled = ms.ToArray();
-                                    compiler.Replace(offset, instr.Length, assembled);
+                                    //compiler.Replace(offset, instr.Length, assembled);
+                                    compiler.Insert(offset + instr.Length, assembled);
                                 }
                                 break;
                             }

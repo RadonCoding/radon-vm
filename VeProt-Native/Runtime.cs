@@ -6,10 +6,9 @@ using Microsoft.DiaSymReader;
 namespace VeProt_Native {
     public static class Runtime {
         const string DLL_NAME = "VeProt-Native.Runtime.dll";
-        const string PDB_NAME = "VeProt-Native.Runtime.pdb";
 
         [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern int Hash(IntPtr pInput);
+        public static extern uint Hash(IntPtr pInput);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Ansi)]
         public static extern IntPtr LoadLibrary(string lpFileName);

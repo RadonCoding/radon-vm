@@ -30,13 +30,6 @@ namespace VeProt_Native {
             }
 
             IntPtr src = Runtime.GetFunction(name);
-            byte* pCurrent = (byte*)src;
-
-            if (*pCurrent == 0xE9) {
-                pCurrent = pCurrent + *(uint*)(pCurrent + 1) + 5;
-                src = new IntPtr(pCurrent);
-            }
-
             int len = Runtime.GetSize(name);
 
             byte[] body = new byte[len];
