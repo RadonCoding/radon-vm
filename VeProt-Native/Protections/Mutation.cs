@@ -94,31 +94,6 @@ namespace VeProt_Native.Protections {
             }
         }
 
-        private void MutateAdd(Compiler compiler, Decoder decoder, Instruction instr, byte[] code, int offset) {
-            if (instr.Op0Register.GetSize() != 8) return;
-            if (instr.Op0Kind != OpKind.Register || instr.Op1Kind != OpKind.Register) return;
-
-            if (instr.Op0Register == instr.Op1Register) return;
-            if (instr.Op0Register == Register.RSP || instr.Op1Register == Register.RSP) return;
-            if (instr.Op0Register.GetSize() != instr.Op1Register.GetSize()) return;
-
-            dynamic first = ToAsmRegister(instr.Op0Register);
-            dynamic second = ToAsmRegister(instr.Op1Register);
-            
-            Assembler ass = new Assembler(64);
-            ass.push(second);
-            ass.not(second);
-            ass.sub(first, second);
-            ass.pop(second);
-            ass.sub(first, 1);
-
-            using (var ms = new MemoryStream()) {
-                ass.Assemble(new StreamCodeWriter(ms), instr.IP);
-                byte[] assembled = ms.ToArray();
-                compiler.Replace(offset, instr.Length, assembled);
-            }
-        }
-
         public void Execute(Compiler compiler, uint oldSectionRVA, uint newSectionRVA, byte[] code) {
             var reader = new ByteArrayCodeReader(code.ToArray());
             var decoder = Decoder.Create(64, reader, oldSectionRVA);
@@ -138,10 +113,7 @@ namespace VeProt_Native.Protections {
 
                 switch (instr.OpCode.Code.Mnemonic()) {
                     case Mnemonic.Mov:
-                        MutateMov(compiler, decoder, instr, code, offset);
-                        break;
-                    case Mnemonic.Add:
-                        MutateAdd(compiler, decoder, instr, code, offset);
+                        //MutateMov(compiler, decoder, instr, code, offset);
                         break;
                 }
             }

@@ -143,7 +143,7 @@ namespace VeProt_Native {
                     if (isInSameSection) {
                         uint offset = (uint)(dst - ip);
 
-                        foreach (var adjustment in _adjustments.Where(x => x.Offset <= offset)) {
+                        foreach (var adjustment in _adjustments.Where(x => x.Offset < offset)) {
                             dst += (uint)adjustment.Length;
                         }
                     }
@@ -176,7 +176,7 @@ namespace VeProt_Native {
             }
         }
 
-        private void FixAdjustments(byte[] code, uint oldIP, uint newIP) {
+        private void FixAdjustments(Dictionary<int, Adjustment> inserted, byte[] code, uint oldIP, uint newIP) {
             var instrs = GetInstructions(code, newIP);
 
             foreach (var instr in instrs) {
@@ -185,11 +185,11 @@ namespace VeProt_Native {
 
                     ulong dst = instr.IsIPRelativeMemoryOperand ? instr.IPRelativeMemoryAddress : instr.NearBranchTarget;
 
-                    if (_adjustments.Any(x => src >= x.Offset && src < x.Offset + x.Length)) {
-                        uint original = src;
-
-                        foreach (var adjustment in _adjustments.Where(x => x.Offset <= original)) {
-                            dst -= (uint)adjustment.Length;
+                    // If the instruction is part of an adjustment
+                    if (inserted.Any(x => src >= x.Key && src < x.Key + x.Value.Bytes.Length)) {
+                        // The logic here is that we want to ignore the adjustment that this instruction is part of so we add the size of the adjustment to it's beginning
+                        foreach (var insert in inserted.Where(x => x.Key + x.Value.Length <= src)) {
+                            dst -= (uint)insert.Value.Length;
                         }
                         _references[src] = dst - (newIP - oldIP);
                     }
@@ -197,8 +197,10 @@ namespace VeProt_Native {
             }
         }
 
-        private void ApplyAdjustments(ref byte[] code) {
+        private Dictionary<int, Adjustment> ApplyAdjustments(ref byte[] code) {
             var adjusted = code.ToList();
+
+            var result = new Dictionary<int, Adjustment>();
 
             int displacement = 0;
 
@@ -211,15 +213,17 @@ namespace VeProt_Native {
                     }
                     if (adjustment.Bytes.Length > adjustment.Replace) {
                         adjusted.InsertRange(offset + adjustment.Replace.Value, adjustment.Bytes[adjustment.Replace.Value..]);
-                        displacement += adjustment.Bytes.Length - adjustment.Replace.Value;
+                        displacement += adjustment.Length;
                     }
                 } else {
                     adjusted.InsertRange(offset, adjustment.Bytes);
                     displacement += adjustment.Bytes.Length;
                 }
-                adjustment.Offset = offset;
+                result.Add(offset, adjustment);
             }
             code = adjusted.ToArray();
+
+            return result;
         }
 
         private void Reassemble(ref byte[] code, uint ip) {
@@ -228,8 +232,7 @@ namespace VeProt_Native {
             uint[] offsets = new uint[instrs.Count];
 
             for (int i = 0; i < instrs.Count; i++) {
-                var instr = instrs[i];
-                uint offset = (uint)(instr.IP - ip);
+                uint offset = (uint)(instrs[i].IP - ip);
                 offsets[i] = offset;
             }
 
@@ -269,8 +272,20 @@ namespace VeProt_Native {
             var writer = new CodeWriterImpl();
             var block = new InstructionBlock(writer, instrs, ip);
 
-            if (!BlockEncoder.TryEncode(64, block, out string? error, out _)) {
+            if (!BlockEncoder.TryEncode(64, block, out string? error, out var result, BlockEncoderOptions.ReturnNewInstructionOffsets)) {
                 throw new Exception(error);
+            }
+
+            // Find new offsets
+            foreach (var kv in _offsets) {
+                for (int i = 0; i < result.NewInstructionOffsets.Length; i++) {
+                    uint oldOffset = offsets[i];
+                    uint newOffset = result.NewInstructionOffsets[i];
+
+                    if (kv.Value == oldOffset) {
+                        _offsets[kv.Key] = newOffset;
+                    }
+                }
             }
             code = writer.ToArray();
         }
@@ -282,6 +297,13 @@ namespace VeProt_Native {
             uint oldSectionRVA = oldSection.Rva;
             uint oldSectionSize = oldSection.GetVirtualSize();
             uint newSectionRVA = (last.Rva + last.GetVirtualSize()).Align(_file.OptionalHeader.SectionAlignment);
+
+            var oldInstrs = GetInstructions(code, oldSectionRVA);
+
+            foreach (var instr in oldInstrs) {
+                uint offset = (uint)(instr.IP - oldSectionRVA);
+                _offsets[offset] = offset;
+            }
 
             // Find all IP relative instructions to other sections and subtract difference between new and old rva
             FixReferences(code, oldSectionRVA, newSectionRVA, oldSectionSize);
@@ -300,9 +322,19 @@ namespace VeProt_Native {
                 ulong newSectionSize = ((ulong)code.Length).Align(_file.OptionalHeader.SectionAlignment);
                 CalcReferences(code, newSectionRVA, newSectionSize);
 
+                // Find all adjustments inserted before the offsets
+                foreach (var kv in _offsets) {
+                    foreach (var adjustment in _adjustments) {
+                        // If the adjustment was before or at the instruction start we add the length
+                        if (adjustment.Offset <= kv.Value) {
+                            _offsets[kv.Key] += (uint)adjustment.Length;
+                        }
+                    }
+                }
+
                 // Apply adjustments and fix IP relative instructions in them
-                ApplyAdjustments(ref code);
-                FixAdjustments(code, oldSectionRVA, newSectionRVA);
+                var inserted = ApplyAdjustments(ref code);
+                FixAdjustments(inserted, code, oldSectionRVA, newSectionRVA);
 
                 // Assemble the code with adjustments
                 Reassemble(ref code, newSectionRVA);
@@ -310,8 +342,6 @@ namespace VeProt_Native {
                 _references.Clear();
                 _adjustments.Clear();
             }
-
-            // TODO: Fill the _offsets dictionary
 
             var newSection = new PESection(".veprot1",
                 SectionFlags.ContentCode | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,
@@ -373,7 +403,7 @@ namespace VeProt_Native {
         }
 
         sealed class Adjustment {
-            public int Offset { get; set; }
+            public int Offset { get; }
             public int? Replace { get; }
             public byte[] Bytes { get; }
             public bool IsReplace => Replace.HasValue;

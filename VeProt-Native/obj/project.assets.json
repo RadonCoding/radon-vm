@@ -365,13 +365,13 @@
           }
         }
       },
-      "VeProt-Native.Runtime/1.0.0": {
+      "veprot-native.runtime/1.0.0": {
         "type": "project",
         "compile": {
-          "bin/placeholder/VeProt-Native.Runtime.dll": {}
+          "bin/placeholder/veprot-native.runtime.dll": {}
         },
         "runtime": {
-          "bin/placeholder/VeProt-Native.Runtime.dll": {}
+          "bin/placeholder/veprot-native.runtime.dll": {}
         }
       }
     }
@@ -1552,10 +1552,10 @@
         "system.threading.tasks.nuspec"
       ]
     },
-    "VeProt-Native.Runtime/1.0.0": {
+    "veprot-native.runtime/1.0.0": {
       "type": "project",
-      "path": "../VeProt-Native.Runtime/VeProt-Native.Runtime.vcxproj",
-      "msbuildProject": "../VeProt-Native.Runtime/VeProt-Native.Runtime.vcxproj"
+      "path": "../veprot-native.runtime/veprot-native.runtime.vcxproj",
+      "msbuildProject": "../veprot-native.runtime/veprot-native.runtime.vcxproj"
     }
   },
   "projectFileDependencyGroups": {
@@ -1567,7 +1567,7 @@
       "Microsoft.DiaSymReader >= 2.0.0",
       "Microsoft.DiaSymReader.Native >= 1.7.0",
       "System.Collections.Specialized >= 4.3.0",
-      "VeProt-Native.Runtime >= 1.0.0"
+      "veprot-native.runtime >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -1577,11 +1577,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\radon\\Desktop\\dev\\veprot-native\\VeProt-Native\\VeProt-Native.csproj",
-      "projectName": "VeProt-Native",
-      "projectPath": "C:\\Users\\radon\\Desktop\\dev\\veprot-native\\VeProt-Native\\VeProt-Native.csproj",
+      "projectUniqueName": "C:\\Users\\radon\\Desktop\\dev\\veprot-native\\veprot-native\\veprot-native.csproj",
+      "projectName": "veprot-native",
+      "projectPath": "C:\\Users\\radon\\Desktop\\dev\\veprot-native\\veprot-native\\veprot-native.csproj",
       "packagesPath": "C:\\Users\\radon\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\radon\\Desktop\\dev\\veprot-native\\VeProt-Native\\obj\\",
+      "outputPath": "C:\\Users\\radon\\Desktop\\dev\\veprot-native\\veprot-native\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

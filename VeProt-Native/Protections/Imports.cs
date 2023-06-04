@@ -49,18 +49,38 @@ namespace VeProt_Native.Protections {
                                 uint lib = Runtime.Hash(Marshal.StringToHGlobalAnsi(import.Name));
 
                                 Assembler ass = new Assembler(64);
-                                //ass.mov(ecx, lib);
-                                //ass.mov(edx, func);
-                                //ass.call(resolve);
-                                //ass.call(rax);
-                                ass.nop();
+
+                                // Save rcx and rdx
+                                ass.push(rcx);
+                                ass.push(rdx);
+
+                                // Establish a stack frame
+                                ass.push(rbp);
+                                ass.mov(rbp, rsp);
+
+                                // Offset the stack by 16 bytes so the rcx and rdx on the stack aren't affected
+                                ass.sub(rsp, 16);
+
+                                // Call the hash resolver
+                                ass.mov(ecx, lib);
+                                ass.mov(edx, func);
+                                ass.call(resolve);
+
+                                // Restore the stack to it's original state
+                                ass.add(rsp, 16);
+                                ass.pop(rbp);
+
+                                // Rerstore rcx and rdx
+                                ass.pop(rdx);
+                                ass.pop(rcx);
+
+                                // Call the resolved function
+                                ass.call(rax);
 
                                 using (var ms = new MemoryStream()) {
-                                    //ass.Assemble(new StreamCodeWriter(ms), instr.IP);
-                                    ass.Assemble(new StreamCodeWriter(ms), instr.NextIP);
+                                    ass.Assemble(new StreamCodeWriter(ms), instr.IP);
                                     byte[] assembled = ms.ToArray();
-                                    //compiler.Replace(offset, instr.Length, assembled);
-                                    compiler.Insert(offset + instr.Length, assembled);
+                                    compiler.Replace(offset, instr.Length, assembled);
                                 }
                                 break;
                             }

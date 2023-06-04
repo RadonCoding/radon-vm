@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "QMloNmSek29MKtL+RsOUathsbyQTf1IieS8ZI22YsG6NLs2XlcPrGnNaEzeEn4HyWLH1J5Ph/T7+z6Z1FB/m3A==",
+  "dgSpecHash": "OQEm4Q87B+bfdjmV3MReVJSsHjJK01xEcdJZ2x/zURa5YqGwnSZeOqE7huGNUkwcZw6HqyGwXie/LxzNZLdg3w==",
   "success": true,
-  "projectFilePath": "C:\\Users\\radon\\Desktop\\dev\\veprot-native\\VeProt-Native\\VeProt-Native.csproj",
+  "projectFilePath": "C:\\Users\\radon\\Desktop\\dev\\veprot-native\\veprot-native\\veprot-native.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\radon\\.nuget\\packages\\asmresolver\\5.3.0\\asmresolver.5.3.0.nupkg.sha512",
     "C:\\Users\\radon\\.nuget\\packages\\asmresolver.pe\\5.3.0\\asmresolver.pe.5.3.0.nupkg.sha512",
