@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VeProt-Native", "VeProt-Nat
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VeProt-Native.Runtime", "VeProt-Native.Runtime\VeProt-Native.Runtime.vcxproj", "{FA1BBB3C-7DAC-4961-BDB9-15D5B5FDC4A2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Testing", "Testing\Testing.vcxproj", "{886BC781-AC84-4194-A444-4EDF34074265}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,18 +41,6 @@ Global
 		{FA1BBB3C-7DAC-4961-BDB9-15D5B5FDC4A2}.Release|x64.Build.0 = Release|x64
 		{FA1BBB3C-7DAC-4961-BDB9-15D5B5FDC4A2}.Release|x86.ActiveCfg = Release|Win32
 		{FA1BBB3C-7DAC-4961-BDB9-15D5B5FDC4A2}.Release|x86.Build.0 = Release|Win32
-		{886BC781-AC84-4194-A444-4EDF34074265}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{886BC781-AC84-4194-A444-4EDF34074265}.Debug|Any CPU.Build.0 = Debug|x64
-		{886BC781-AC84-4194-A444-4EDF34074265}.Debug|x64.ActiveCfg = Debug|x64
-		{886BC781-AC84-4194-A444-4EDF34074265}.Debug|x64.Build.0 = Debug|x64
-		{886BC781-AC84-4194-A444-4EDF34074265}.Debug|x86.ActiveCfg = Debug|Win32
-		{886BC781-AC84-4194-A444-4EDF34074265}.Debug|x86.Build.0 = Debug|Win32
-		{886BC781-AC84-4194-A444-4EDF34074265}.Release|Any CPU.ActiveCfg = Release|x64
-		{886BC781-AC84-4194-A444-4EDF34074265}.Release|Any CPU.Build.0 = Release|x64
-		{886BC781-AC84-4194-A444-4EDF34074265}.Release|x64.ActiveCfg = Release|x64
-		{886BC781-AC84-4194-A444-4EDF34074265}.Release|x64.Build.0 = Release|x64
-		{886BC781-AC84-4194-A444-4EDF34074265}.Release|x86.ActiveCfg = Release|Win32
-		{886BC781-AC84-4194-A444-4EDF34074265}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

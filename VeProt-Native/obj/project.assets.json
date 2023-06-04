@@ -1577,11 +1577,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\radon\\Desktop\\veprot-native\\VeProt-Native\\VeProt-Native.csproj",
+      "projectUniqueName": "C:\\Users\\radon\\Desktop\\dev\\veprot-native\\VeProt-Native\\VeProt-Native.csproj",
       "projectName": "VeProt-Native",
-      "projectPath": "C:\\Users\\radon\\Desktop\\veprot-native\\VeProt-Native\\VeProt-Native.csproj",
+      "projectPath": "C:\\Users\\radon\\Desktop\\dev\\veprot-native\\VeProt-Native\\VeProt-Native.csproj",
       "packagesPath": "C:\\Users\\radon\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\radon\\Desktop\\veprot-native\\VeProt-Native\\obj\\",
+      "outputPath": "C:\\Users\\radon\\Desktop\\dev\\veprot-native\\VeProt-Native\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -1603,8 +1603,8 @@
         "net6.0": {
           "targetAlias": "net6.0",
           "projectReferences": {
-            "C:\\Users\\radon\\Desktop\\veprot-native\\VeProt-Native.Runtime\\VeProt-Native.Runtime.vcxproj": {
-              "projectPath": "C:\\Users\\radon\\Desktop\\veprot-native\\VeProt-Native.Runtime\\VeProt-Native.Runtime.vcxproj"
+            "C:\\Users\\radon\\Desktop\\dev\\veprot-native\\VeProt-Native.Runtime\\VeProt-Native.Runtime.vcxproj": {
+              "projectPath": "C:\\Users\\radon\\Desktop\\dev\\veprot-native\\VeProt-Native.Runtime\\VeProt-Native.Runtime.vcxproj"
             }
           }
         }

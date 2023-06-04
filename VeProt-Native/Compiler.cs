@@ -311,7 +311,7 @@ namespace VeProt_Native {
                 _adjustments.Clear();
             }
 
-            // NO WAY OF KEEPING TRACK OF OFFSETS SO ALL THE CODE IS USELESS FUCK
+            // TODO: Fill the _offsets dictionary
 
             var newSection = new PESection(".veprot1",
                 SectionFlags.ContentCode | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,
