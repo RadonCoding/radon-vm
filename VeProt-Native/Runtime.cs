@@ -1,7 +1,4 @@
-﻿using System.Diagnostics.SymbolStore;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using Microsoft.DiaSymReader;
+﻿using System.Runtime.InteropServices;
 
 namespace VeProt_Native {
     public static class Runtime {

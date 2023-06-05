@@ -19,6 +19,8 @@ namespace VeProt_Native.Protections {
             }
 
             uint resolve = compiler.Injector.Inject("Resolve");
+            uint prologue = compiler.Injector.GetPrologue();
+            uint epilogue = compiler.Injector.GetEpilogue();
 
             foreach (var instr in instrs) {
                 int offset = (int)(instr.IP - oldSectionRVA);
@@ -50,29 +52,16 @@ namespace VeProt_Native.Protections {
 
                                 Assembler ass = new Assembler(64);
 
-                                // Save rcx and rdx
-                                ass.push(rcx);
-                                ass.push(rdx);
-
-                                // Establish a stack frame
-                                ass.push(rbp);
-                                ass.mov(rbp, rsp);
-
-                                // Offset the stack by 16 bytes so the rcx and rdx on the stack aren't affected
-                                ass.sub(rsp, 16);
+                                // Save registers
+                                ass.call(prologue);
 
                                 // Call the hash resolver
                                 ass.mov(ecx, lib);
                                 ass.mov(edx, func);
                                 ass.call(resolve);
 
-                                // Restore the stack to it's original state
-                                ass.add(rsp, 16);
-                                ass.pop(rbp);
-
-                                // Rerstore rcx and rdx
-                                ass.pop(rdx);
-                                ass.pop(rcx);
+                                // Restore registers
+                                ass.call(epilogue);
 
                                 // Call the resolved function
                                 ass.call(rax);

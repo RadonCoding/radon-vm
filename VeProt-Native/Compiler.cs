@@ -1,14 +1,10 @@
 ﻿using AsmResolver;
 using AsmResolver.PE;
-using AsmResolver.PE.Code;
 using AsmResolver.PE.File;
 using AsmResolver.PE.File.Headers;
 using AsmResolver.PE.Relocations;
 using Iced.Intel;
-using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using VeProt_Native.Protections;
 
 namespace VeProt_Native {
