@@ -1,5 +1,4 @@
 ﻿using Iced.Intel;
-using System.Diagnostics;
 
 namespace VeProt_Native.Protections {
     internal class Mutation : IProtection {
@@ -113,7 +112,7 @@ namespace VeProt_Native.Protections {
 
                 switch (instr.OpCode.Code.Mnemonic()) {
                     case Mnemonic.Mov:
-                        //MutateMov(compiler, decoder, instr, code, offset);
+                        MutateMov(compiler, decoder, instr, code, offset);
                         break;
                 }
             }

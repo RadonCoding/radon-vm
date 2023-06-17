@@ -6,6 +6,7 @@ using AsmResolver.PE.Relocations;
 using Iced.Intel;
 using System.Runtime.InteropServices;
 using VeProt_Native.Protections;
+using VeProt_Native.Protections.Virtualization;
 
 namespace VeProt_Native {
     internal class Compiler {
@@ -286,6 +287,34 @@ namespace VeProt_Native {
             code = writer.ToArray();
         }
 
+        private void Execute(IProtection protection, uint oldSectionRVA, uint newSectionRVA, byte[] code) {
+            protection.Execute(this, oldSectionRVA, newSectionRVA, code);
+
+            // Calculate the reference targets taking into account the adjustments
+            ulong newSectionSize = ((ulong)code.Length).Align(_file.OptionalHeader.SectionAlignment);
+            CalcReferences(code, newSectionRVA, newSectionSize);
+
+            // Find all adjustments inserted before the offsets
+            foreach (var kv in _offsets) {
+                foreach (var adjustment in _adjustments) {
+                    // If the adjustment was before or at the instruction start we add the length
+                    if (adjustment.Offset <= kv.Value) {
+                        _offsets[kv.Key] += (uint)adjustment.Length;
+                    }
+                }
+            }
+
+            // Apply adjustments and fix IP relative instructions in them
+            var inserted = ApplyAdjustments(ref code);
+            FixAdjustments(inserted, code, oldSectionRVA, newSectionRVA);
+
+            // Assemble the code with adjustments
+            Reassemble(ref code, newSectionRVA);
+
+            _references.Clear();
+            _adjustments.Clear();
+        }
+
         private unsafe void Process(PESection oldSection) {
             byte[] code = oldSection.WriteIntoArray();
 
@@ -307,37 +336,8 @@ namespace VeProt_Native {
 
             _references.Clear();
 
-            var ass = GetType().Assembly;
-
-            // Main loop for applying all passes
-            foreach (var type in ass.GetTypes().Where(x => x.GetInterface("IProtection") != null)) {
-                var instance = Activator.CreateInstance(type);
-                ((IProtection)instance!).Execute(this, oldSectionRVA, newSectionRVA, code);
-
-                // Calculate the reference targets taking into account the adjustments
-                ulong newSectionSize = ((ulong)code.Length).Align(_file.OptionalHeader.SectionAlignment);
-                CalcReferences(code, newSectionRVA, newSectionSize);
-
-                // Find all adjustments inserted before the offsets
-                foreach (var kv in _offsets) {
-                    foreach (var adjustment in _adjustments) {
-                        // If the adjustment was before or at the instruction start we add the length
-                        if (adjustment.Offset <= kv.Value) {
-                            _offsets[kv.Key] += (uint)adjustment.Length;
-                        }
-                    }
-                }
-
-                // Apply adjustments and fix IP relative instructions in them
-                var inserted = ApplyAdjustments(ref code);
-                FixAdjustments(inserted, code, oldSectionRVA, newSectionRVA);
-
-                // Assemble the code with adjustments
-                Reassemble(ref code, newSectionRVA);
-
-                _references.Clear();
-                _adjustments.Clear();
-            }
+            Execute(new Virtualization(), oldSectionRVA, newSectionRVA, code);
+            Execute(new Mutation(), oldSectionRVA, newSectionRVA, code);
 
             var newSection = new PESection(".veprot1",
                 SectionFlags.ContentCode | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,

@@ -23,69 +23,14 @@ namespace VeProt_Native {
             _rva = rva;
         }
 
-        public uint GetPrologue() {
-            const string name = "Prologue";
-
-            if (Injected.ContainsKey(name)) {
-                return Injected[name];
-            }
-
-            Assembler ass = new Assembler(64);
-            ass.sub(rsp, 96);
-
-            ass.mov(__[rsp - 8], rbx);
-            ass.mov(__[rsp - 16], rcx);
-            ass.mov(__[rsp - 24], rdx);
-            ass.mov(__[rsp - 32], rsi);
-            ass.mov(__[rsp - 40], rdi);
-            ass.mov(__[rsp - 48], r8);
-            ass.mov(__[rsp - 56], r9);
-            ass.mov(__[rsp - 64], r10);
-            ass.mov(__[rsp - 72], r11);
-            ass.mov(__[rsp - 80], r12);
-            ass.mov(__[rsp - 88], r13);
-            ass.mov(__[rsp - 96], r14);
-            ass.mov(__[rsp - 104], r15);
-
-            ass.add(rsp, 96);
-
-            ass.ret();
-
-            return Insert(name, ass);
+        public uint Insert(string name, byte[] data) {
+            Array.Copy(data, 0, _bytes, _offset, data.Length);
+            _injected.Add(name, (uint)(_rva + _offset));
+            _offset += data.Length;
+            return _injected[name];
         }
 
-        public uint GetEpilogue() {
-            const string name = "Epilogue";
-
-            if (Injected.ContainsKey(name)) {
-                return Injected[name];
-            }
-
-            Assembler ass = new Assembler(64);
-            ass.sub(rsp, 96);
-
-            ass.mov(r15, __[rsp - 104]);
-            ass.mov(r14, __[rsp - 96]);
-            ass.mov(r13, __[rsp - 88]);
-            ass.mov(r12, __[rsp - 80]);
-            ass.mov(r11, __[rsp - 72]);
-            ass.mov(r10, __[rsp - 64]);
-            ass.mov(r9, __[rsp - 56]);
-            ass.mov(r8, __[rsp - 48]);
-            ass.mov(rdi, __[rsp - 40]);
-            ass.mov(rsi, __[rsp - 32]);
-            ass.mov(rdx, __[rsp - 24]);
-            ass.mov(rcx, __[rsp - 16]);
-            ass.mov(rbx, __[rsp - 8]);
-
-            ass.add(rsp, 96);
-
-            ass.ret();
-
-            return Insert(name, ass);
-        }
-
-        private uint Insert(string name, Assembler ass) {
+        public uint Insert(string name, Assembler ass) {
             using (var ms = new MemoryStream()) {
                 ass.Assemble(new StreamCodeWriter(ms), (uint)(_rva + _offset));
                 byte[] assembled = ms.ToArray();
@@ -102,7 +47,7 @@ namespace VeProt_Native {
             }
 
             IntPtr src = Runtime.GetFunction(name);
-            int len = Runtime.GetSize(name);
+            uint len = Runtime.GetSize(name);
 
             byte[] body = new byte[len];
             Marshal.Copy(src, body, 0, body.Length);
@@ -110,9 +55,7 @@ namespace VeProt_Native {
             Array.Copy(body, 0, _bytes, _offset, body.Length);
 
             _injected.Add(name, (uint)(_rva + _offset));
-
             _offset += body.Length;
-
             return _injected[name];
         }
     }

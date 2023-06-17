@@ -4,19 +4,16 @@ namespace VeProt_Native {
     public static class Runtime {
         const string DLL_NAME = "VeProt-Native.Runtime.dll";
 
-        [DllImport(DLL_NAME, CallingConvention = CallingConvention.Cdecl)]
-        public static extern uint Hash(IntPtr pInput);
-
         [DllImport("kernel32.dll", CharSet = CharSet.Ansi)]
         public static extern IntPtr LoadLibrary(string lpFileName);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Ansi)]
         public static extern IntPtr GetProcAddress(IntPtr hModule, string lpProcName);
 
-        public static IntPtr GetFunction(string name) {
-            IntPtr lib = NativeLibrary.Load(DLL_NAME);
-            IntPtr func = NativeLibrary.GetExport(lib, name);
-            return func;
+        public static unsafe IntPtr GetFunction(string name) {
+            var symbol = GetSymbol(name);
+            byte* lib = (byte*)NativeLibrary.Load(DLL_NAME);
+            return new IntPtr(lib + symbol.Address);
         }
 
         private static IReadOnlyCollection<SymbolInfo> GetAllSymbolsFromPdb(string path) {
@@ -25,8 +22,7 @@ namespace VeProt_Native {
             var process = GetCurrentProcess();
 
             if (SymInitialize(process, null, false)) {
-                var callback = new SymEnumSymbolsProc((pSymInfo, SymbolSize, UserContext) =>
-                {
+                var callback = new SymEnumSymbolsProc((pSymInfo, SymbolSize, UserContext) => {
                     symbols.Add(pSymInfo);
                     return true;
                 });
@@ -42,30 +38,34 @@ namespace VeProt_Native {
             return symbols;
         }
 
-        public static int GetSize(string name) {
+        private static SymbolInfo GetSymbol(string name) {
             var symbols = GetAllSymbolsFromPdb(DLL_NAME);
-            return symbols.First(x => x.Name == name).Size;
+            return symbols.First(x => x.Name == name);
+        }
+
+        public static uint GetSize(string name) {
+            var symbol = GetSymbol(name);
+            return symbol.Size;
         }
 
         [StructLayout(LayoutKind.Sequential)]
         public struct SymbolInfo {
-            public int SizeOfStruct;
-            public int TypeIndex;
+            public uint SizeOfStruct;
+            public uint TypeIndex;
             public long Reserved1;
             public long Reserved2;
-            public int Index;
-            public int Size;
-            public long ModBase;
-            public int Flags;
-            public long Value;
-            public long Address;
-            public int Register;
-            public int Scope;
-            public int Tag;
-            public int NameLen;
-            public int MaxNameLen;
-
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
+            public uint Index;
+            public uint Size;
+            public ulong ModBase;
+            public uint Flags;
+            public ulong Value;
+            public ulong Address;
+            public uint Register;
+            public uint Scope;
+            public uint Tag;
+            public uint NameLen;
+            public uint MaxNameLen;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1)]
             public string Name;
         }
 
