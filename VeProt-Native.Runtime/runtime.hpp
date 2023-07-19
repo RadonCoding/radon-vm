@@ -2,6 +2,6 @@
 
 #define EXPORT extern "C" __declspec(dllexport)
 
-EXPORT void VMEntry();
-EXPORT void VMDispatcher();
-EXPORT void VMExit();
+EXPORT void __declspec(naked) VMEntry();
+EXPORT void __declspec(naked) VMDispatcher();
+EXPORT void __declspec(naked) VMExit();

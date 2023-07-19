@@ -1,13 +1,19 @@
 #include "runtime.hpp"
 
-void VMEntry() {
-
+void __declspec(naked) VMEntry() {
+	__asm {
+		// Move physical to virtual state
+	}
 }
 
-void VMDispatcher() {
-
+void __declspec(naked) VMDispatcher() {
+	__asm {
+		// Resolve bytecode based on caller IP
+	}
 }
 
-void VMExit() {
-
+void __declspec(naked) VMExit() {
+	__asm {
+		// Move virtual to physical state
+	}
 }
