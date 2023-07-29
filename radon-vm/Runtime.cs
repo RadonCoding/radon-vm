@@ -13,7 +13,7 @@ namespace VeProt_Native {
         public static unsafe IntPtr GetFunction(string name) {
             var symbol = GetSymbol(name);
             byte* lib = (byte*)NativeLibrary.Load(DLL_NAME);
-            return new IntPtr(lib + symbol.Address);
+            return new IntPtr(lib + symbol.Address - symbol.ModBase);
         }
 
         private static IReadOnlyCollection<SymbolInfo> GetAllSymbolsFromPdb(string path) {
@@ -48,24 +48,80 @@ namespace VeProt_Native {
             return symbol.Size;
         }
 
+
+        [Flags]
+        public enum SymFlag : uint
+        {
+            VALUEPRESENT = 0x00000001,
+            REGISTER = 0x00000008,
+            REGREL = 0x00000010,
+            FRAMEREL = 0x00000020,
+            PARAMETER = 0x00000040,
+            LOCAL = 0x00000080,
+            CONSTANT = 0x00000100,
+            EXPORT = 0x00000200,
+            FORWARDER = 0x00000400,
+            FUNCTION = 0x00000800,
+            VIRTUAL = 0x00001000,
+            THUNK = 0x00002000,
+            TLSREL = 0x00004000,
+        }
+
+        [Flags]
+        public enum SymTagEnum : uint
+        {
+            Null,
+            Exe,
+            Compiland,
+            CompilandDetails,
+            CompilandEnv,
+            Function,
+            Block,
+            Data,
+            Annotation,
+            Label,
+            PublicSymbol,
+            UDT,
+            Enum,
+            FunctionType,
+            PointerType,
+            ArrayType,
+            BaseType,
+            Typedef,
+            BaseClass,
+            Friend,
+            FunctionArgType,
+            FuncDebugStart,
+            FuncDebugEnd,
+            UsingNamespace,
+            VTableShape,
+            VTable,
+            Custom,
+            Thunk,
+            CustomType,
+            ManagedType,
+            Dimension
+        };
+
         [StructLayout(LayoutKind.Sequential)]
         public struct SymbolInfo {
             public uint SizeOfStruct;
             public uint TypeIndex;
-            public long Reserved1;
-            public long Reserved2;
-            public uint Index;
+            public ulong Reserved1;
+            public ulong Reserved2;
+            public uint Reserved3;
             public uint Size;
             public ulong ModBase;
-            public uint Flags;
+            public SymFlag Flags;
             public ulong Value;
             public ulong Address;
             public uint Register;
             public uint Scope;
-            public uint Tag;
-            public uint NameLen;
-            public uint MaxNameLen;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1)]
+            public SymTagEnum Tag;
+            public int NameLen;
+            public int MaxNameLen;
+
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
             public string Name;
         }
 

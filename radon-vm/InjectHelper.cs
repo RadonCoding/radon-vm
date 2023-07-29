@@ -4,7 +4,7 @@ using static Iced.Intel.AssemblerRegisters;
 
 namespace VeProt_Native {
     internal class InjectHelper {
-        public static int SECTION_SIZE = 0x1000;
+        public static int SECTION_SIZE = 0x2000;
 
         public Dictionary<string, uint> Injected { get { return _injected; } }
         public byte[] Bytes { get { return _bytes; } }

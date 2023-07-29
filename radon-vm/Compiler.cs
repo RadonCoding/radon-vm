@@ -40,7 +40,7 @@ namespace VeProt_Native {
 
             _adjustments = new List<Adjustment>();
 
-            PESection inject = new PESection(".veprot0", SectionFlags.ContentCode | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,
+            PESection inject = new PESection(".radon0", SectionFlags.ContentCode | SectionFlags.ContentInitializedData | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,
                 new DataSegment(new byte[InjectHelper.SECTION_SIZE]));
             _file.Sections.Add(inject);
             _file.UpdateHeaders();
@@ -185,7 +185,7 @@ namespace VeProt_Native {
                     // If the instruction is part of an adjustment
                     if (inserted.Any(x => src >= x.Key && src < x.Key + x.Value.Bytes.Length)) {
                         // The logic here is that we want to ignore the adjustment that this instruction is part of so we add the size of the adjustment to it's beginning
-                        foreach (var insert in inserted.Where(x => x.Key + x.Value.Length <= src)) {
+                        foreach (var insert in inserted.Where(x => x.Key + x.Value.Length < src)) {
                             dst -= (uint)insert.Value.Length;
                         }
                         _references[src] = dst - (newIP - oldIP);
@@ -287,7 +287,7 @@ namespace VeProt_Native {
             code = writer.ToArray();
         }
 
-        private void Execute(IProtection protection, uint oldSectionRVA, uint newSectionRVA, byte[] code) {
+        private void Execute(IProtection protection, uint oldSectionRVA, uint newSectionRVA, ref byte[] code) {
             protection.Execute(this, oldSectionRVA, newSectionRVA, code);
 
             // Calculate the reference targets taking into account the adjustments
@@ -336,10 +336,10 @@ namespace VeProt_Native {
 
             _references.Clear();
 
-            Execute(new Virtualization(), oldSectionRVA, newSectionRVA, code);
-            Execute(new Mutation(), oldSectionRVA, newSectionRVA, code);
+            Execute(new Virtualization(), oldSectionRVA, newSectionRVA, ref code);
+            //Execute(new Mutation(), oldSectionRVA, newSectionRVA, ref code);
 
-            var newSection = new PESection(".veprot1",
+            var newSection = new PESection(".radon1",
                 SectionFlags.ContentCode | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,
                 new DataSegment(code));
             _file.Sections.Add(newSection);

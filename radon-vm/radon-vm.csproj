@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\VeProt-Native.Runtime\VeProt-Native.Runtime.vcxproj" />
+    <ProjectReference Include="..\radon-vm.runtime\radon-vm.runtime.vcxproj" />
   </ItemGroup>
 
 </Project>
