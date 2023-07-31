@@ -30,6 +30,13 @@ namespace VeProt_Native.Protections.Virtualization
             R15,
         }
 
+        enum VMRegisterPart
+        {
+            Higher,
+            Lower,
+            None
+        }
+
         private VMRegister ToVMRegister(Register reg)
         {
             switch (reg)
@@ -167,6 +174,35 @@ namespace VeProt_Native.Protections.Virtualization
             }
         }
 
+        private VMRegisterPart GetRegisterPart(Register reg)
+        {
+            switch (reg)
+            {
+                case Register.AH:
+                    return VMRegisterPart.Higher;
+                case Register.AL:
+                    return VMRegisterPart.Lower;
+
+                case Register.CH:
+                    return VMRegisterPart.Higher;
+                case Register.CL:
+                    return VMRegisterPart.Lower;
+
+                case Register.DH:
+                    return VMRegisterPart.Higher;
+                case Register.DL:
+                    return VMRegisterPart.Lower;
+
+                case Register.BH:
+                    return VMRegisterPart.Higher;
+                case Register.BL:
+                    return VMRegisterPart.Lower;
+
+                default:
+                    return VMRegisterPart.None;
+            }
+        }
+
         private byte[] Convert(Instruction instr)
         {
             List<byte> bytes = new List<byte>
@@ -183,14 +219,27 @@ namespace VeProt_Native.Protections.Virtualization
                 if (kind == OpKind.Register)
                 {
                     Register reg = instr.GetOpRegister(i);
-                    bytes.Add((byte)reg.GetSize());
+                    int size = reg.GetSize();
+                    bytes.Add((byte)size);
                     bytes.Add((byte)ToVMRegister(reg));
+                    bytes.Add((byte)GetRegisterPart(reg));
                 }
                 else if (kind.IsImmediate())
                 {
                     byte[] imm = BitConverter.GetBytes(instr.GetImmediate(i));
                     bytes.Add((byte)imm.Length);
                     bytes.AddRange(imm);
+                }
+                else if (kind == OpKind.Memory)
+                {
+                    Register reg = instr.MemoryBase;
+                    bytes.Add((byte)reg.GetSize());
+                    bytes.Add((byte)ToVMRegister(reg));
+                    bytes.Add((byte)GetRegisterPart(reg));
+                }
+                else
+                {
+                    throw new NotImplementedException();
                 }
             }
             return bytes.ToArray();
@@ -245,6 +294,8 @@ namespace VeProt_Native.Protections.Virtualization
 
                 if (SUPPORTED_MNEMONICS.Contains(instr.Mnemonic))
                 {
+                    Console.WriteLine("Virtualizing: {0}", instr);
+
                     Assembler ass = new Assembler(64);
 
                     int index = converted
@@ -254,19 +305,13 @@ namespace VeProt_Native.Protections.Virtualization
                     // VMEntry returns the address to the beginning of VMState
                     ass.call(entry);
 
-                    // Preserving RAX
                     ass.mov(rcx, rax);
-
-                    ass.push(rcx);
-
                     ass.AddInstruction(Instruction.Create(Code.Lea_r64_m, rdx,
                         new MemoryOperand(Register.RIP, Register.None, 1, bytecode, 1)));
                     ass.mov(r8d, index);
                     ass.call(dispatcher);
 
-                    // Restoring RAX
-                    ass.pop(rcx);
-
+                    ass.mov(rcx, rax);
                     ass.call(exit);
 
                     using (var ms = new MemoryStream())

@@ -1,24 +1,58 @@
 #pragma once
 #include <cstdint>
+#include <cstddef>
 
 const int STACK_SIZE = 0x100;
 
-enum VMFlags {
-	CF = 0,
-	PF = 2,
-	AF = 4,
-	ZF = 6,
-	SF = 7,
-	TF = 8,
-	IF = 9,
-	DF = 10,
-	OF = 11
-};
-
 struct VMState {
 	uint8_t stack[STACK_SIZE];
-	uint64_t registers[16];
-	uint64_t rflags;
+	union {
+		uint64_t registers[16];
+		struct {
+			uint64_t rax;
+			uint64_t rcx;
+			uint64_t rdx;
+			uint64_t rbx;
+			uint64_t rsp;
+			uint64_t rbp;
+			uint64_t rsi;
+			uint64_t rdi;
+			uint64_t r8;
+			uint64_t r9;
+			uint64_t r10;
+			uint64_t r11;
+			uint64_t r12;
+			uint64_t r13;
+			uint64_t r14;
+			uint64_t r15;
+		};
+	};
+	union {
+		uint64_t rflags;
+		struct {
+			uint64_t cf : 1;
+			uint64_t reserved1 : 1;
+			uint64_t pf : 1;
+			uint64_t reserved2 : 1;
+			uint64_t af : 1;
+			uint64_t reserved3 : 1;
+			uint64_t zf : 1;
+			uint64_t sf : 1;
+			uint64_t tf : 1;
+			uint64_t _if : 1;
+			uint64_t df : 1;
+			uint64_t of : 1;
+			uint64_t iopl : 2;
+			uint64_t nt : 1;
+			uint64_t reserved4 : 1;
+			uint64_t rf : 1;
+			uint64_t vm : 1;
+			uint64_t ac : 1;
+			uint64_t vif : 1;
+			uint64_t vip : 1;
+			uint64_t id : 1;
+		};
+	};
 };
 
 enum VMMnemonic {
@@ -1927,7 +1961,6 @@ enum VMOpKind {
 	MemoryESRDI,
 	Memory,
 };
-
 enum VMRegister : int {
 	RAX,
 	RCX,
@@ -1946,7 +1979,8 @@ enum VMRegister : int {
 	R14,
 	R15
 };
-
-__declspec(dllexport) __declspec(naked) void VMEntry();
-__declspec(dllexport) void VMDispatcher(VMState* state, uint8_t* bytecode, int index);
-__declspec(dllexport) __declspec(naked) void VMExit();
+enum VMRegisterPart {
+	Higher,
+	Lower,
+	None
+};
