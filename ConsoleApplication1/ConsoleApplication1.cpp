@@ -279,8 +279,8 @@ bool test7() {
 
 		VMOpKind::Register,
 		1,
-		VMRegister::RAX,
-		VMRegisterPart::Lower
+		VMRegister::RBX,
+		VMRegisterPart::Higher
 	};
 
 	uint64_t result = 0;
@@ -289,7 +289,7 @@ bool test7() {
 
 	__asm {
 		lea rax, result
-		mov al, num1
+		mov bh, num1
 	}
 
 	__asm {

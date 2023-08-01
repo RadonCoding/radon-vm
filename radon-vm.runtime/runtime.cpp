@@ -69,21 +69,24 @@ __declspec(dllexport) void VMDispatcher(VMState* tmp, uint8_t* bytecode, int ind
 			VMRegister reg1 = static_cast<VMRegister>(bytecode[index + 8]);
 			VMRegisterPart part1 = static_cast<VMRegisterPart>(bytecode[index + 9]);
 
+			uint64_t value0 = (state.registers[reg0] >> (part0 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
+			uint64_t value1 = (state.registers[reg1] >> (part1 == VMRegisterPart::Higher ? 8 : 0)) & op1Mask;
+
 			if (op0Kind == VMOpKind::Register) {
-				state.registers[reg0] = (state.registers[reg0] & op0Mask) + (state.registers[reg1] & op1Mask);
+				state.registers[reg0] = value0 + value1;
 			}
 			else if (op0Kind == VMOpKind::Memory) {
 				if (op0Size == 1) {
-					*reinterpret_cast<uint8_t*>(state.registers[reg0]) += state.registers[reg1] & op1Mask;
+					*reinterpret_cast<uint8_t*>(state.registers[reg0]) += value1;
 				}
 				else if (op0Size == 2) {
-					*reinterpret_cast<uint16_t*>(state.registers[reg0]) += state.registers[reg1] & op1Mask;
+					*reinterpret_cast<uint16_t*>(state.registers[reg0]) += value1;
 				}
 				else if (op0Size == 4) {
-					*reinterpret_cast<uint32_t*>(state.registers[reg0]) += state.registers[reg1] & op1Mask;
+					*reinterpret_cast<uint32_t*>(state.registers[reg0]) += value1;
 				}
 				else if (op0Size == 8) {
-					*reinterpret_cast<uint64_t*>(state.registers[reg0]) += state.registers[reg1] & op1Mask;
+					*reinterpret_cast<uint64_t*>(state.registers[reg0]) += value1;
 				}
 			}
 		}
@@ -91,61 +94,71 @@ __declspec(dllexport) void VMDispatcher(VMState* tmp, uint8_t* bytecode, int ind
 			VMRegister reg1 = static_cast<VMRegister>(bytecode[index + 8]);
 			VMRegisterPart part1 = static_cast<VMRegisterPart>(bytecode[index + 9]);
 
-			uint64_t value;
+			if (part1 == VMRegisterPart::Higher) {
+				op1Mask = op1Mask >> 8;
+			}
+
+			uint64_t value0 = (state.registers[reg0] >> (part0 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
+
+			uint64_t value1;
 
 			if (op1Size == 1) {
-				value = *reinterpret_cast<uint8_t*>(state.registers[reg1]);
+				value1 = (*reinterpret_cast<uint8_t*>(state.registers[reg1]) >> (part1 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
 			}
 			else if (op1Size == 2) {
-				value = *reinterpret_cast<uint16_t*>(state.registers[reg1]);
+				value1 = (*reinterpret_cast<uint16_t*>(state.registers[reg1]) >> (part1 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
 			}
 			else if (op1Size == 4) {
-				value = *reinterpret_cast<uint32_t*>(state.registers[reg1]);
+				value1 = (*reinterpret_cast<uint32_t*>(state.registers[reg1]) >> (part1 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
 			}
 			else if (op1Size == 8) {
-				value = *reinterpret_cast<uint64_t*>(state.registers[reg1]);
+				value1 = (*reinterpret_cast<uint64_t*>(state.registers[reg1]) >> (part1 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
 			}
-			state.registers[reg0] = (state.registers[reg0] & op0Mask) + (value & op1Mask);
+			state.registers[reg0] = value0 + value1;
 		}
 		else if (op1Kind == VMOpKind::Immediate8) {
 			uint8_t imm8 = bytecode[index + 8];
 
+			uint64_t value0 = (state.registers[reg0] >> (part0 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
+
 			if (op0Kind == VMOpKind::Register) {
-				state.registers[reg0] = (state.registers[reg0] & op0Mask) + imm8;
+				state.registers[reg0] = value0 + imm8;
 			}
 			else if (op0Kind == VMOpKind::Memory) {
 				if (op0Size == 1) {
-					*reinterpret_cast<uint8_t*>(state.registers[reg0]) += imm8;
+					*reinterpret_cast<uint8_t*>(state.registers[reg0]) = value0 + imm8;
 				}
 				else if (op0Size == 2) {
-					*reinterpret_cast<uint16_t*>(state.registers[reg0]) += imm8;
+					*reinterpret_cast<uint16_t*>(state.registers[reg0]) = value0 + imm8;
 				}
 				else if (op0Size == 4) {
-					*reinterpret_cast<uint32_t*>(state.registers[reg0]) += imm8;
+					*reinterpret_cast<uint32_t*>(state.registers[reg0]) = value0 + imm8;
 				}
 				else if (op0Size == 8) {
-					*reinterpret_cast<uint64_t*>(state.registers[reg0]) += imm8;
+					*reinterpret_cast<uint64_t*>(state.registers[reg0]) = value0 + imm8;
 				}
 			}
 		}
 		else if (op1Kind == VMOpKind::Immediate16) {
 			uint16_t imm16 = *reinterpret_cast<uint16_t*>(&bytecode[index + 8]);
 
+			uint64_t value0 = (state.registers[reg0] >> (part0 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
+
 			if (op0Kind == VMOpKind::Register) {
-				state.registers[reg0] = (state.registers[reg0] & op0Mask) + imm16;
+				state.registers[reg0] = value0 + imm16;
 			}
 			else if (op0Kind == VMOpKind::Memory) {
 				if (op0Size == 1) {
-					*reinterpret_cast<uint8_t*>(state.registers[reg0]) += imm16;
+					*reinterpret_cast<uint8_t*>(state.registers[reg0]) = value0 + imm16;
 				}
 				else if (op0Size == 2) {
-					*reinterpret_cast<uint16_t*>(state.registers[reg0]) += imm16;
+					*reinterpret_cast<uint16_t*>(state.registers[reg0]) = value0 + imm16;
 				}
 				else if (op0Size == 4) {
-					*reinterpret_cast<uint32_t*>(state.registers[reg0]) += imm16;
+					*reinterpret_cast<uint32_t*>(state.registers[reg0]) = value0 + imm16;
 				}
 				else if (op0Size == 8) {
-					*reinterpret_cast<uint64_t*>(state.registers[reg0]) += imm16;
+					*reinterpret_cast<uint64_t*>(state.registers[reg0]) = value0 + imm16;
 				}
 			}
 		}
@@ -153,42 +166,46 @@ __declspec(dllexport) void VMDispatcher(VMState* tmp, uint8_t* bytecode, int ind
 			int8_t imm8 = static_cast<int8_t>(bytecode[index + 8]);
 			int16_t imm16 = static_cast<int16_t>(imm8);
 
+			uint64_t value0 = (state.registers[reg0] >> (part0 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
+
 			if (op0Kind == VMOpKind::Register) {
-				state.registers[reg0] = (state.registers[reg0] & op0Mask) + imm16;
+				state.registers[reg0] = value0 + imm16;
 			}
 			else if (op0Kind == VMOpKind::Memory) {
 				if (op0Size == 1) {
-					*reinterpret_cast<uint8_t*>(state.registers[reg0]) += imm16;
+					*reinterpret_cast<uint8_t*>(state.registers[reg0]) = value0 + imm16;
 				}
 				else if (op0Size == 2) {
-					*reinterpret_cast<uint16_t*>(state.registers[reg0]) += imm16;
+					*reinterpret_cast<uint16_t*>(state.registers[reg0]) = value0 + imm16;
 				}
 				else if (op0Size == 4) {
-					*reinterpret_cast<uint32_t*>(state.registers[reg0]) += imm16;
+					*reinterpret_cast<uint32_t*>(state.registers[reg0]) = value0 + imm16;
 				}
 				else if (op0Size == 8) {
-					*reinterpret_cast<uint64_t*>(state.registers[reg0]) += imm16;
+					*reinterpret_cast<uint64_t*>(state.registers[reg0]) = value0 + imm16;
 				}
 			}
 		}
 		else if (op1Kind == VMOpKind::Immediate32) {
 			uint32_t imm32 = *reinterpret_cast<uint32_t*>(&bytecode[index + 8]);
 
+			uint64_t value0 = (state.registers[reg0] >> (part0 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
+
 			if (op0Kind == VMOpKind::Register) {
-				state.registers[reg0] = (state.registers[reg0] & op0Mask) + imm32;
+				state.registers[reg0] = value0 + imm32;
 			}
 			else if (op0Kind == VMOpKind::Memory) {
 				if (op0Size == 1) {
-					*reinterpret_cast<uint8_t*>(state.registers[reg0]) += imm32;
+					*reinterpret_cast<uint8_t*>(state.registers[reg0]) = value0 + imm32;
 				}
 				else if (op0Size == 2) {
-					*reinterpret_cast<uint16_t*>(state.registers[reg0]) += imm32;
+					*reinterpret_cast<uint16_t*>(state.registers[reg0]) = value0 + imm32;
 				}
 				else if (op0Size == 4) {
-					*reinterpret_cast<uint32_t*>(state.registers[reg0]) += imm32;
+					*reinterpret_cast<uint32_t*>(state.registers[reg0]) = value0 + imm32;
 				}
 				else if (op0Size == 8) {
-					*reinterpret_cast<uint64_t*>(state.registers[reg0]) += imm32;
+					*reinterpret_cast<uint64_t*>(state.registers[reg0]) = value0 + imm32;
 				}
 			}
 		}
@@ -196,42 +213,46 @@ __declspec(dllexport) void VMDispatcher(VMState* tmp, uint8_t* bytecode, int ind
 			int8_t imm8 = static_cast<int8_t>(bytecode[index + 8]);
 			int32_t imm32 = static_cast<int32_t>(imm8);
 
+			uint64_t value0 = (state.registers[reg0] >> (part0 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
+
 			if (op0Kind == VMOpKind::Register) {
-				state.registers[reg0] = (state.registers[reg0] & op0Mask) + imm32;
+				state.registers[reg0] = value0 + imm32;
 			}
 			else if (op0Kind == VMOpKind::Memory) {
 				if (op0Size == 1) {
-					*reinterpret_cast<uint8_t*>(state.registers[reg0]) += imm32;
+					*reinterpret_cast<uint8_t*>(state.registers[reg0]) = value0 + imm32;
 				}
 				else if (op0Size == 2) {
-					*reinterpret_cast<uint16_t*>(state.registers[reg0]) += imm32;
+					*reinterpret_cast<uint16_t*>(state.registers[reg0]) = value0 + imm32;
 				}
 				else if (op0Size == 4) {
-					*reinterpret_cast<uint32_t*>(state.registers[reg0]) += imm32;
+					*reinterpret_cast<uint32_t*>(state.registers[reg0]) = value0 + imm32;
 				}
 				else if (op0Size == 8) {
-					*reinterpret_cast<uint64_t*>(state.registers[reg0]) += imm32;
+					*reinterpret_cast<uint64_t*>(state.registers[reg0]) = value0 + imm32;
 				}
 			}
 		}
 		else if (op1Kind == VMOpKind::Immediate64) {
 			uint64_t imm64 = *reinterpret_cast<uint64_t*>(&bytecode[index + 8]);
 
+			uint64_t value0 = (state.registers[reg0] >> (part0 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
+
 			if (op0Kind == VMOpKind::Register) {
-				state.registers[reg0] = (state.registers[reg0] & op0Mask) + imm64;
+				state.registers[reg0] = value0 + imm64;
 			}
 			else if (op0Kind == VMOpKind::Memory) {
 				if (op0Size == 1) {
-					*reinterpret_cast<uint8_t*>(state.registers[reg0]) += imm64;
+					*reinterpret_cast<uint8_t*>(state.registers[reg0]) = value0 + imm64;
 				}
 				else if (op0Size == 2) {
-					*reinterpret_cast<uint16_t*>(state.registers[reg0]) += imm64;
+					*reinterpret_cast<uint16_t*>(state.registers[reg0]) = value0 + imm64;
 				}
 				else if (op0Size == 4) {
-					*reinterpret_cast<uint32_t*>(state.registers[reg0]) += imm64;
+					*reinterpret_cast<uint32_t*>(state.registers[reg0]) = value0 + imm64;
 				}
 				else if (op0Size == 8) {
-					*reinterpret_cast<uint64_t*>(state.registers[reg0]) += imm64;
+					*reinterpret_cast<uint64_t*>(state.registers[reg0]) = value0 + imm64;
 				}
 			}
 		}
@@ -239,21 +260,23 @@ __declspec(dllexport) void VMDispatcher(VMState* tmp, uint8_t* bytecode, int ind
 			uint8_t imm8 = static_cast<int8_t>(bytecode[index + 8]);
 			int64_t imm64 = static_cast<int64_t>(imm8);
 
+			uint64_t value0 = (state.registers[reg0] >> (part0 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
+
 			if (op0Kind == VMOpKind::Register) {
-				state.registers[reg0] = (state.registers[reg0] & op0Mask) + imm64;
+				state.registers[reg0] = value0 + imm64;
 			}
 			else if (op0Kind == VMOpKind::Memory) {
 				if (op0Size == 1) {
-					*reinterpret_cast<uint8_t*>(state.registers[reg0]) += imm64;
+					*reinterpret_cast<uint8_t*>(state.registers[reg0]) = value0 + imm64;
 				}
 				else if (op0Size == 2) {
-					*reinterpret_cast<uint16_t*>(state.registers[reg0]) += imm64;
+					*reinterpret_cast<uint16_t*>(state.registers[reg0]) = value0 + imm64;
 				}
 				else if (op0Size == 4) {
-					*reinterpret_cast<uint32_t*>(state.registers[reg0]) += imm64;
+					*reinterpret_cast<uint32_t*>(state.registers[reg0]) = value0 + imm64;
 				}
 				else if (op0Size == 8) {
-					*reinterpret_cast<uint64_t*>(state.registers[reg0]) += imm64;
+					*reinterpret_cast<uint64_t*>(state.registers[reg0]) = value0 + imm64;
 				}
 			}
 		}
@@ -261,21 +284,23 @@ __declspec(dllexport) void VMDispatcher(VMState* tmp, uint8_t* bytecode, int ind
 			int32_t imm32 = static_cast<int32_t>(bytecode[index + 8]);
 			int64_t imm64 = static_cast<int64_t>(imm32);
 
+			uint64_t value0 = (state.registers[reg0] >> (part0 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
+
 			if (op0Kind == VMOpKind::Register) {
-				state.registers[reg0] = (state.registers[reg0] & op0Mask) + imm64;
+				state.registers[reg0] = value0 + imm64;
 			}
 			else if (op0Kind == VMOpKind::Memory) {
 				if (op0Size == 1) {
-					*reinterpret_cast<uint8_t*>(state.registers[reg0]) += imm64;
+					*reinterpret_cast<uint8_t*>(state.registers[reg0]) = value0 + imm64;
 				}
 				else if (op0Size == 2) {
-					*reinterpret_cast<uint16_t*>(state.registers[reg0]) += imm64;
+					*reinterpret_cast<uint16_t*>(state.registers[reg0]) = value0 + imm64;
 				}
 				else if (op0Size == 4) {
-					*reinterpret_cast<uint32_t*>(state.registers[reg0]) += imm64;
+					*reinterpret_cast<uint32_t*>(state.registers[reg0]) = value0 + imm64;
 				}
 				else if (op0Size == 8) {
-					*reinterpret_cast<uint64_t*>(state.registers[reg0]) += imm64;
+					*reinterpret_cast<uint64_t*>(state.registers[reg0]) = value0 + imm64;
 				}
 			}
 		}
