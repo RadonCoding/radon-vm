@@ -1,8 +1,11 @@
-﻿using System.Runtime.InteropServices;
+﻿using AsmResolver;
+using AsmResolver.PE.File;
+using System.Runtime.InteropServices;
+using System.Xml.Linq;
 
 namespace VeProt_Native {
     public static class Runtime {
-        const string DLL_NAME = "VeProt-Native.Runtime.dll";
+        const string DLL_NAME = "radon-vm.runtime.dll";
 
         [DllImport("kernel32.dll", CharSet = CharSet.Ansi)]
         public static extern IntPtr LoadLibrary(string lpFileName);
@@ -14,6 +17,20 @@ namespace VeProt_Native {
             var symbol = GetSymbol(name);
             byte* lib = (byte*)NativeLibrary.Load(DLL_NAME);
             return new IntPtr(lib + symbol.Address - symbol.ModBase);
+        }
+
+        public static ulong GetIP(string name)
+        {
+            var symbol = GetSymbol(name);
+            var file = PEFile.FromFile(DLL_NAME);
+            var section = file.GetSectionContainingRva((uint)(symbol.Address - symbol.ModBase));
+            return section.Rva;
+        }
+
+        public static string GetName(ulong address)
+        {
+            var symbols = GetAllSymbolsFromPdb(DLL_NAME);
+            return symbols.First(x => (x.Address - x.ModBase) == address).Name;
         }
 
         private static IReadOnlyCollection<SymbolInfo> GetAllSymbolsFromPdb(string path) {
@@ -38,7 +55,7 @@ namespace VeProt_Native {
             return symbols;
         }
 
-        private static SymbolInfo GetSymbol(string name) {
+        public static SymbolInfo GetSymbol(string name) {
             var symbols = GetAllSymbolsFromPdb(DLL_NAME);
             return symbols.First(x => x.Name == name);
         }
@@ -47,7 +64,6 @@ namespace VeProt_Native {
             var symbol = GetSymbol(name);
             return symbol.Size;
         }
-
 
         [Flags]
         public enum SymFlag : uint

@@ -37,7 +37,13 @@ __declspec(dllexport) __declspec(naked) void VMEntry() {
 	}
 }
 
+__declspec(dllexport) void Testing() {
+
+}
+
 __declspec(dllexport) void VMDispatcher(VMState* tmp, uint8_t* bytecode, int index) {
+	Testing();
+
 	VMState state = *tmp;
 
 	VMMnemonic opCode = static_cast<VMMnemonic>(bytecode[index]);

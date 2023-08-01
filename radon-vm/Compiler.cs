@@ -44,10 +44,10 @@ namespace VeProt_Native {
                 new DataSegment(new byte[InjectHelper.SECTION_SIZE]));
             _file.Sections.Add(inject);
             _file.UpdateHeaders();
-            _injector = new InjectHelper(inject.Rva);
+            _injector = new InjectHelper(this, inject.Rva);
         }
 
-        private List<Instruction> GetInstructions(byte[] code, ulong ip) {
+        public List<Instruction> GetInstructions(byte[] code, ulong ip) {
             var reader = new ByteArrayCodeReader(code);
             var decoder = Decoder.Create(64, reader, ip);
 
@@ -390,12 +390,6 @@ namespace VeProt_Native {
             inject.Contents = new DataSegment(_injector.Bytes.ToArray());
 
             _file.Write(_filename);
-        }
-
-        sealed class CodeWriterImpl : CodeWriter {
-            private readonly List<byte> _bytes = new List<byte>();
-            public override void WriteByte(byte value) => _bytes.Add(value);
-            public byte[] ToArray() => _bytes.ToArray();
         }
 
         sealed class Adjustment {
