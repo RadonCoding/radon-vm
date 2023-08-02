@@ -1,5 +1,7 @@
 #include "runtime.hpp"
 #include <iostream>
+#include <Windows.h>
+#include "lazy_importer.hpp"
 
 __declspec(naked) void LoadRegisters(uint64_t* registers) {
 	__asm {
@@ -62,9 +64,9 @@ __declspec(safebuffers) VMState* VMEntry() {
 		pop flags
 	}
 
-	VMState* state = reinterpret_cast<VMState*>(malloc(sizeof(VMState)));
-	memcpy(state->registers, registers, sizeof(state->registers) + 8);
-	memcpy(&state->rflags, &flags, sizeof(flags));
+	VMState* state = reinterpret_cast<VMState*>(LI_FN(malloc)(sizeof(VMState)));
+	LI_FN(memcpy)(state->registers, registers, sizeof(state->registers) + 8);
+	LI_FN(memcpy)(&state->rflags, &flags, sizeof(flags));
 
 	return state;
 }
@@ -128,7 +130,7 @@ void HandleAdd(VMState* state, uint8_t* bytecode, int index) {
 			state->registers[reg0] = value0 + value1;
 		}
 		else if (op0Kind == VMOpKind::Memory) {
-			memcpy(reinterpret_cast<uint64_t*>(state->registers[reg0]), &value1, op0Size);
+			LI_FN(memcpy)(reinterpret_cast<uint64_t*>(state->registers[reg0]), &value1, op0Size);
 		}
 	}
 	else if (op1Kind == VMOpKind::Memory) {
@@ -142,7 +144,7 @@ void HandleAdd(VMState* state, uint8_t* bytecode, int index) {
 		uint64_t value0 = (state->registers[reg0] >> (part0 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
 
 		uint64_t value1;
-		memcpy(&value1, reinterpret_cast<uint64_t*>(state->registers[reg1]), op1Size);
+		LI_FN(memcpy)(&value1, reinterpret_cast<uint64_t*>(state->registers[reg1]), op1Size);
 
 		value1 >>= (part1 == VMRegisterPart::Higher ? 8 : 0) & op0Mask;
 
@@ -188,9 +190,9 @@ __declspec(safebuffers) void VMExit(VMState* state) {
 	LoadFlags(state->rflags);
 
 	uint64_t registers[16];
-	memcpy(registers, state->registers, sizeof(registers));
+	LI_FN(memcpy)(registers, state->registers, sizeof(registers));
 
-	free(state);
+	LI_FN(free)(state);
 
 	LoadRegisters(registers);
 }

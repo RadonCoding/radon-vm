@@ -1,18 +1,11 @@
-﻿using AsmResolver;
-using AsmResolver.PE.File.Headers;
-using Iced.Intel;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Reflection.Emit;
+﻿using Iced.Intel;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using static Iced.Intel.AssemblerRegisters;
 
 namespace VeProt_Native
 {
     internal class InjectHelper
     {
-        public static int SECTION_SIZE = 0x2000;
+        public static int SECTION_SIZE = 0x3000;
 
         public Dictionary<string, uint> Injected { get { return _injected; } }
         public byte[] Bytes { get { return _bytes; } }
@@ -99,45 +92,8 @@ namespace VeProt_Native
                     if (!(target >= start && target < end))
                     {
                         string current = Runtime.GetName(target);
-
-                        bool imp = current.StartsWith("_imp_");
-
-                        bool found = false;
-
-                        foreach (var lib in _compiler.Image.Imports)
-                        {
-                            foreach (var import in lib.Symbols)
-                            {
-                                if (import.Name == (imp ? current.Substring(5) : current))
-                                {
-                                    Console.WriteLine("Found IAT: {0}", current);
-
-                                    var seg = import.AddressTableEntry;
-
-                                    if (imp)
-                                    {
-                                        _compiler.SetTarget(ref instr, seg!.Rva);
-                                    }
-                                    else
-                                    {
-                                        Assembler ass = new Assembler(64);
-                                        ass.jmp(seg!.Rva);
-
-                                        ulong thunk = Insert(current, ass);
-
-                                        _compiler.SetTarget(ref instr, thunk);
-                                    }
-                                    found = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (!found)
-                        {
-                            Console.WriteLine("Injecting: {0}", current);
-                            _compiler.SetTarget(ref instr, Inject(current));
-                        }
+                        Console.WriteLine("Injecting: {0}", current);
+                        _compiler.SetTarget(ref instr, Inject(current));
                     }
                 }
                 instrs[i] = instr;

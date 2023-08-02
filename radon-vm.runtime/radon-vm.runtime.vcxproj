@@ -167,6 +167,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="lazy_importer.hpp" />
     <ClInclude Include="runtime.hpp" />
   </ItemGroup>
   <ItemGroup>

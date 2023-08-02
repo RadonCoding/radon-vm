@@ -306,12 +306,16 @@ namespace VeProt_Native.Protections.Virtualization
                     ass.call(entry);
 
                     ass.mov(rcx, rax);
+
+                    ass.push(rcx);
+
                     ass.AddInstruction(Instruction.Create(Code.Lea_r64_m, rdx,
                         new MemoryOperand(Register.RIP, Register.None, 1, bytecode, 1)));
                     ass.mov(r8d, index);
                     ass.call(dispatcher);
 
-                    ass.mov(rcx, rax);
+                    ass.pop(rcx);
+
                     ass.call(exit);
 
                     using (var ms = new MemoryStream())
