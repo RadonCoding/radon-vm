@@ -4,6 +4,7 @@ using AsmResolver.PE.File;
 using AsmResolver.PE.File.Headers;
 using AsmResolver.PE.Relocations;
 using Iced.Intel;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using VeProt_Native.Protections;
 using VeProt_Native.Protections.Virtualization;
@@ -13,6 +14,8 @@ namespace VeProt_Native {
         public PEFile File { get { return _file; } }
         public IPEImage Image { get { return _image; } }
         public InjectHelper Injector { get { return _injector; } }
+        public PESection? OldCodeSection { get { return _oldCodeSection; } }
+        public PESection? NewCodeSection { get { return _newCodeSection; } }
 
         private string _filename;
 
@@ -27,6 +30,9 @@ namespace VeProt_Native {
         private List<Adjustment> _adjustments;
 
         private InjectHelper _injector;
+
+        private PESection? _oldCodeSection;
+        private PESection? _newCodeSection;
 
         public Compiler(string filename) {
             _filename = filename;
@@ -223,6 +229,36 @@ namespace VeProt_Native {
             return result;
         }
 
+        public void SetTarget(ref Instruction instr, ulong target)
+        {
+            if (instr.IsIPRelativeMemoryOperand)
+            {
+                if (instr.MemoryDisplSize == 8)
+                {
+                    instr.MemoryDisplacement64 = target;
+                }
+                else
+                {
+                    instr.MemoryDisplacement32 = (uint)target;
+                }
+            }
+            else
+            {
+                switch (instr.Op0Kind)
+                {
+                    case OpKind.NearBranch16:
+                        instr.NearBranch16 = (ushort)target;
+                        break;
+                    case OpKind.NearBranch32:
+                        instr.NearBranch32 = (uint)target;
+                        break;
+                    case OpKind.NearBranch64:
+                        instr.NearBranch64 = target;
+                        break;
+                }
+            }
+        }
+
         private void Reassemble(ref byte[] code, uint ip) {
             var instrs = GetInstructions(code, ip);
 
@@ -236,31 +272,14 @@ namespace VeProt_Native {
             for (int i = 0; i < instrs.Count; i++) {
                 var instr = instrs[i];
 
-                if (instr.IsIPRelative()) {
+                if (instr.IsIPRelative())
+                {
                     uint src = (uint)(instr.IP - ip);
 
-                    if (_references.ContainsKey(src)) {
+                    if (_references.ContainsKey(src))
+                    {
                         ulong dst = _references[src];
-
-                        if (instr.IsIPRelativeMemoryOperand) {
-                            if (instr.MemoryDisplSize == 8) {
-                                instr.MemoryDisplacement64 = dst;
-                            } else {
-                                instr.MemoryDisplacement32 = (uint)dst;
-                            }
-                        } else {
-                            switch (instr.Op0Kind) {
-                                case OpKind.NearBranch16:
-                                    instr.NearBranch16 = (ushort)dst;
-                                    break;
-                                case OpKind.NearBranch32:
-                                    instr.NearBranch32 = (uint)dst;
-                                    break;
-                                case OpKind.NearBranch64:
-                                    instr.NearBranch64 = dst;
-                                    break;
-                            }
-                        }
+                        SetTarget(ref instr, dst);
                     }
                 }
                 instrs[i] = instr;
@@ -315,12 +334,12 @@ namespace VeProt_Native {
             _adjustments.Clear();
         }
 
-        private unsafe void Process(PESection oldSection) {
-            byte[] code = oldSection.WriteIntoArray();
+        private unsafe void Process() {
+            byte[] code = _oldCodeSection!.WriteIntoArray();
 
             var last = _file.Sections.Last();
-            uint oldSectionRVA = oldSection.Rva;
-            uint oldSectionSize = oldSection.GetVirtualSize();
+            uint oldSectionRVA = _oldCodeSection!.Rva;
+            uint oldSectionSize = _oldCodeSection!.GetVirtualSize();
             uint newSectionRVA = (last.Rva + last.GetVirtualSize()).Align(_file.OptionalHeader.SectionAlignment);
 
             var oldInstrs = GetInstructions(code, oldSectionRVA);
@@ -339,20 +358,20 @@ namespace VeProt_Native {
             Execute(new Virtualization(), oldSectionRVA, newSectionRVA, ref code);
             //Execute(new Mutation(), oldSectionRVA, newSectionRVA, ref code);
 
-            var newSection = new PESection(".radon1",
+            _newCodeSection = new PESection(".radon1",
                 SectionFlags.ContentCode | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,
                 new DataSegment(code));
-            _file.Sections.Add(newSection);
+            _file.Sections.Add(_newCodeSection);
 
             _file.UpdateHeaders();
 
-            uint size = oldSection.GetPhysicalSize().Align(_file.OptionalHeader.FileAlignment);
+            uint size = _oldCodeSection!.GetPhysicalSize().Align(_file.OptionalHeader.FileAlignment);
             uint oep = _file.OptionalHeader.AddressOfEntryPoint;
 
             byte[] replaced = new byte[size];
 
-            if (oep >= oldSection.Rva && oep < oldSection.Rva + oldSection.GetVirtualSize()) {
-                uint offset = oep - oldSection.Rva;
+            if (oep >= _oldCodeSection!.Rva && oep < _oldCodeSection!.Rva + _oldCodeSection!.GetVirtualSize()) {
+                uint offset = oep - _oldCodeSection!.Rva;
                 uint nep = newSectionRVA + _offsets[offset];
 
                 var asm = new Assembler(64);
@@ -366,14 +385,14 @@ namespace VeProt_Native {
                 }
             }
 
-            oldSection.Contents = new DataSegment(replaced);
+            _oldCodeSection!.Contents = new DataSegment(replaced);
 
             using (var ms = new MemoryStream()) {
                 _file.Write(ms);
 
                 byte[] image = ms.ToArray();
-                FixRelocs(image, oldSection, newSection);
-                FixExceptions(image, oldSection, newSection);
+                FixRelocs(image, _oldCodeSection, _newCodeSection);
+                FixExceptions(image, _oldCodeSection, _newCodeSection);
 
                 _file = PEFile.FromBytes(image);
                 _image = PEImage.FromFile(_file);
@@ -381,14 +400,13 @@ namespace VeProt_Native {
         }
 
         public void Protect() {
-            var section = _file.GetSectionContainingRva(_file.OptionalHeader.AddressOfEntryPoint);
-            Process(section);
+            _oldCodeSection = _file.GetSectionContainingRva(_file.OptionalHeader.AddressOfEntryPoint);
+            Process();
         }
 
         public void Save() {
             var inject = _file.GetSectionContainingRva(_injector.Rva);
             inject.Contents = new DataSegment(_injector.Bytes.ToArray());
-
             _file.Write(_filename);
         }
 

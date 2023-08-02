@@ -30,16 +30,21 @@ bool test1() {
 		lea rsi, [num2]
 	}
 
+	VMState* state;
+
 	__asm {
 		call VMEntry
 
 		mov rcx, rax
 
+		push rcx
+
 		lea rdx, bytecode
 		mov r8d, 0
 		call VMDispatcher
 
-		mov rcx, rax
+		pop rcx
+
 		call VMExit
 	}
 
@@ -79,11 +84,14 @@ bool test2() {
 
 		mov rcx, rax
 
+		push rcx
+
 		lea rdx, bytecode
 		mov r8d, 0
 		call VMDispatcher
 
-		mov rcx, rax
+		pop rcx
+
 		call VMExit
 	}
 	return result == num1;
@@ -120,11 +128,14 @@ bool test3() {
 
 		mov rcx, rax
 
+		push rcx
+
 		lea rdx, bytecode
 		mov r8d, 0
 		call VMDispatcher
 
-		mov rcx, rax
+		pop rcx
+
 		call VMExit
 	}
 
@@ -163,11 +174,14 @@ bool test4() {
 
 		mov rcx, rax
 
+		push rcx
+
 		lea rdx, bytecode
 		mov r8d, 0
 		call VMDispatcher
 
-		mov rcx, rax
+		pop rcx
+
 		call VMExit
 	}
 
@@ -207,11 +221,14 @@ bool test5() {
 
 		mov rcx, rax
 
+		push rcx
+
 		lea rdx, bytecode
 		mov r8d, 0
 		call VMDispatcher
 
-		mov rcx, rax
+		pop rcx
+
 		call VMExit
 	}
 
@@ -253,11 +270,14 @@ bool test6() {
 
 		mov rcx, rax
 
+		push rcx
+
 		lea rdx, bytecode
 		mov r8d, 0
 		call VMDispatcher
 
-		mov rcx, rax
+		pop rcx
+
 		call VMExit
 	}
 
@@ -297,11 +317,14 @@ bool test7() {
 
 		mov rcx, rax
 
+		push rcx
+
 		lea rdx, bytecode
 		mov r8d, 0
 		call VMDispatcher
 
-		mov rcx, rax
+		pop rcx
+
 		call VMExit
 	}
 	return result == num1;

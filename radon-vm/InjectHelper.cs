@@ -1,6 +1,9 @@
-﻿using AsmResolver.PE.File.Headers;
+﻿using AsmResolver;
+using AsmResolver.PE.File.Headers;
 using Iced.Intel;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using static Iced.Intel.AssemblerRegisters;
@@ -33,6 +36,11 @@ namespace VeProt_Native
 
         public uint Insert(string name, byte[] data)
         {
+            if (_injected.ContainsKey(name))
+            {
+                return _injected[name];
+            }
+
             Array.Copy(data, 0, _bytes, _offset, data.Length);
             _injected.Add(name, (uint)(_rva + _offset));
             _offset += data.Length;
@@ -41,6 +49,11 @@ namespace VeProt_Native
 
         public uint Insert(string name, Assembler ass)
         {
+            if (_injected.ContainsKey(name))
+            {
+                return _injected[name];
+            }
+
             using (var ms = new MemoryStream())
             {
                 ass.Assemble(new StreamCodeWriter(ms), (uint)(_rva + _offset));
@@ -49,36 +62,6 @@ namespace VeProt_Native
                 _injected.Add(name, (uint)(_rva + _offset));
                 _offset += assembled.Length;
                 return _injected[name];
-            }
-        }
-
-        private void SetTarget(Instruction instr, ulong target)
-        {
-            if (instr.IsIPRelativeMemoryOperand)
-            {
-                if (instr.MemoryDisplSize == 8)
-                {
-                    instr.MemoryDisplacement64 = target;
-                }
-                else
-                {
-                    instr.MemoryDisplacement32 = (uint)target;
-                }
-            }
-            else
-            {
-                switch (instr.Op0Kind)
-                {
-                    case OpKind.NearBranch16:
-                        instr.NearBranch16 = (ushort)target;
-                        break;
-                    case OpKind.NearBranch32:
-                        instr.NearBranch32 = (uint)target;
-                        break;
-                    case OpKind.NearBranch64:
-                        instr.NearBranch64 = target;
-                        break;
-                }
             }
         }
 
@@ -117,16 +100,33 @@ namespace VeProt_Native
                     {
                         string current = Runtime.GetName(target);
 
+                        bool imp = current.StartsWith("_imp_");
+
                         bool found = false;
 
                         foreach (var lib in _compiler.Image.Imports)
                         {
                             foreach (var import in lib.Symbols)
                             {
-                                if (import.Name == current)
+                                if (import.Name == (imp ? current.Substring(5) : current))
                                 {
+                                    Console.WriteLine("Found IAT: {0}", current);
+
                                     var seg = import.AddressTableEntry;
-                                    SetTarget(instr, seg!.Rva);
+
+                                    if (imp)
+                                    {
+                                        _compiler.SetTarget(ref instr, seg!.Rva);
+                                    }
+                                    else
+                                    {
+                                        Assembler ass = new Assembler(64);
+                                        ass.jmp(seg!.Rva);
+
+                                        ulong thunk = Insert(current, ass);
+
+                                        _compiler.SetTarget(ref instr, thunk);
+                                    }
                                     found = true;
                                     break;
                                 }
@@ -135,7 +135,8 @@ namespace VeProt_Native
 
                         if (!found)
                         {
-                            SetTarget(instr, Inject(current));
+                            Console.WriteLine("Injecting: {0}", current);
+                            _compiler.SetTarget(ref instr, Inject(current));
                         }
                     }
                 }
