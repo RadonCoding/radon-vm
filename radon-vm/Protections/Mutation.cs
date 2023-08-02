@@ -1,4 +1,5 @@
 ﻿using Iced.Intel;
+using System.Diagnostics;
 
 namespace VeProt_Native.Protections {
     internal class Mutation : IProtection {
@@ -33,9 +34,15 @@ namespace VeProt_Native.Protections {
         private ulong Rotr64(ulong value, int shift) {
             return (value >> shift) | (value << (64 - shift));
         }
+        private ulong Rotl8(byte value, int shift)
+        {
+            return (byte)((value << shift) | (value >> (8 - shift)));
+        }
 
         private void MutateMov(Compiler compiler, Decoder decoder, Instruction instr, byte[] code, int offset) {
             if (instr.Op0Kind != OpKind.Register || !instr.Op1Kind.IsImmediate()) return;
+
+            Console.WriteLine("Mutating: {0}", instr);
 
             var offsets = decoder.GetConstantOffsets(instr);
             var size = offsets.ImmediateSize;

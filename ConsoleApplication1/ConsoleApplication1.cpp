@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include "../radon-vm.runtime/runtime.cpp"
+#include <cassert>
 
 // add rax, [rsi]
 bool test1() {

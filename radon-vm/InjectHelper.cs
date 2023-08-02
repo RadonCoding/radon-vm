@@ -19,6 +19,13 @@ namespace VeProt_Native
         private int _offset;
         private Compiler _compiler;
 
+        private static string[] BLACKLIST =
+        {
+            "VMEntry",
+            "VMExit",
+            "HandleAdd"
+        };
+
         public InjectHelper(Compiler compiler, uint rva)
         {
             _injected = new Dictionary<string, uint>();
@@ -71,8 +78,9 @@ namespace VeProt_Native
             byte[] body = new byte[len];
             Marshal.Copy(func, body, 0, body.Length);
 
+
             var symbol = Runtime.GetSymbol(name);
-            ulong ip = symbol.Address - symbol.ModBase;
+            uint ip = (uint)(symbol.Address - symbol.ModBase);
 
             // Decompile
             var instrs = _compiler.GetInstructions(body, ip);
@@ -108,6 +116,12 @@ namespace VeProt_Native
                 throw new Exception(error);
             }
             body = writer.ToArray();
+
+            if (!BLACKLIST.Contains(name))
+            {
+                // Obfuscate
+                _compiler.Obfuscate(body, (uint)(_rva + _offset));
+            }
 
             Array.Copy(body, 0, _bytes, _offset, body.Length);
 

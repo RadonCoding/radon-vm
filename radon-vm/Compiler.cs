@@ -259,7 +259,7 @@ namespace VeProt_Native {
             }
         }
 
-        private void Reassemble(ref byte[] code, uint ip) {
+        private void Reassemble(ref byte[] code, uint ip, bool pe = true) {
             var instrs = GetInstructions(code, ip);
 
             uint[] offsets = new uint[instrs.Count];
@@ -288,37 +288,49 @@ namespace VeProt_Native {
             var writer = new CodeWriterImpl();
             var block = new InstructionBlock(writer, instrs, ip);
 
-            if (!BlockEncoder.TryEncode(64, block, out string? error, out var result, BlockEncoderOptions.ReturnNewInstructionOffsets)) {
+            if (!BlockEncoder.TryEncode(64, block, out string? error, out var result, pe ? BlockEncoderOptions.ReturnNewInstructionOffsets : BlockEncoderOptions.None)) {
                 throw new Exception(error);
             }
 
-            // Find new offsets
-            foreach (var kv in _offsets) {
-                for (int i = 0; i < result.NewInstructionOffsets.Length; i++) {
-                    uint oldOffset = offsets[i];
-                    uint newOffset = result.NewInstructionOffsets[i];
+            if (pe)
+            {
+                // Find new offsets
+                foreach (var kv in _offsets)
+                {
+                    for (int i = 0; i < result.NewInstructionOffsets.Length; i++)
+                    {
+                        uint oldOffset = offsets[i];
+                        uint newOffset = result.NewInstructionOffsets[i];
 
-                    if (kv.Value == oldOffset) {
-                        _offsets[kv.Key] = newOffset;
+                        if (kv.Value == oldOffset)
+                        {
+                            _offsets[kv.Key] = newOffset;
+                        }
                     }
                 }
             }
             code = writer.ToArray();
         }
 
-        private void Execute(IProtection protection, uint oldSectionRVA, uint newSectionRVA, ref byte[] code) {
+        private void Execute(IProtection protection, uint oldSectionRVA, uint newSectionRVA, ref byte[] code, bool pe = true) {
             protection.Execute(this, oldSectionRVA, newSectionRVA, code);
 
             // Calculate the reference targets taking into account the adjustments
             ulong newSectionSize = ((ulong)code.Length).Align(_file.OptionalHeader.SectionAlignment);
             CalcReferences(code, newSectionRVA, newSectionSize);
 
-            // Find all adjustments inserted before the offsets
-            foreach (var kv in _offsets) {
-                foreach (var adjustment in _adjustments) {
-                    // If the adjustment was before or at the instruction start we add the length
-                    if (adjustment.Offset <= kv.Value) {
-                        _offsets[kv.Key] += (uint)adjustment.Length;
+            if (pe)
+            {
+                // Find all adjustments inserted before the offsets
+                foreach (var kv in _offsets)
+                {
+                    foreach (var adjustment in _adjustments)
+                    {
+                        // If the adjustment was before or at the instruction start we add the length
+                        if (adjustment.Offset <= kv.Value)
+                        {
+                            _offsets[kv.Key] += (uint)adjustment.Length;
+                        }
                     }
                 }
             }
@@ -328,10 +340,15 @@ namespace VeProt_Native {
             FixAdjustments(inserted, code, oldSectionRVA, newSectionRVA);
 
             // Assemble the code with adjustments
-            Reassemble(ref code, newSectionRVA);
+            Reassemble(ref code, newSectionRVA, pe);
 
             _references.Clear();
             _adjustments.Clear();
+        }
+
+        public void Obfuscate(byte[] code, uint ip)
+        {
+            Execute(new Mutation(), ip, ip, ref code, false);
         }
 
         private unsafe void Process() {
@@ -356,7 +373,7 @@ namespace VeProt_Native {
             _references.Clear();
 
             Execute(new Virtualization(), oldSectionRVA, newSectionRVA, ref code);
-            //Execute(new Mutation(), oldSectionRVA, newSectionRVA, ref code);
+            Execute(new Mutation(), oldSectionRVA, newSectionRVA, ref code);
 
             _newCodeSection = new PESection(".radon1",
                 SectionFlags.ContentCode | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,
