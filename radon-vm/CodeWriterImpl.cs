@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace VeProt_Native
+namespace radon_vm
 {
     sealed class CodeWriterImpl : CodeWriter
     {

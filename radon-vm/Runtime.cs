@@ -3,7 +3,7 @@ using AsmResolver.PE.File;
 using System.Runtime.InteropServices;
 using System.Xml.Linq;
 
-namespace VeProt_Native {
+namespace radon_vm {
     public static class Runtime {
         const string DLL_NAME = "radon-vm.runtime.dll";
 

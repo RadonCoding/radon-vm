@@ -1,4 +1,4 @@
-﻿namespace VeProt_Native {
+﻿namespace radon_vm {
     internal class Program {
         private static void Main(string[] args) {
             string inputPath = args[0];

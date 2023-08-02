@@ -1,6 +1,6 @@
 ﻿using Iced.Intel;
 
-namespace VeProt_Native {
+namespace radon_vm {
     public static class IcedExtensions {
         public static bool IsIPRelative(this Instruction instr) {
             if (instr.IsIPRelativeMemoryOperand)

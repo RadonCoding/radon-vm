@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "VeProt-Native": {
+    "radon-vm": {
       "commandName": "Project",
       "commandLineArgs": "C:\\Users\\radon\\Desktop\\crack-me.exe"
     }

@@ -1,11 +1,11 @@
 ﻿using Iced.Intel;
 using System.Runtime.InteropServices;
 
-namespace VeProt_Native
+namespace radon_vm
 {
     internal class InjectHelper
     {
-        public static int SECTION_SIZE = 0x3000;
+        public static int SECTION_SIZE = 0x5000;
 
         public Dictionary<string, uint> Injected { get { return _injected; } }
         public byte[] Bytes { get { return _bytes; } }
@@ -18,13 +18,6 @@ namespace VeProt_Native
         private uint _rva;
         private int _offset;
         private Compiler _compiler;
-
-        private static string[] BLACKLIST =
-        {
-            "VMEntry",
-            "VMExit",
-            "HandleAdd"
-        };
 
         public InjectHelper(Compiler compiler, uint rva)
         {
@@ -117,11 +110,8 @@ namespace VeProt_Native
             }
             body = writer.ToArray();
 
-            if (!BLACKLIST.Contains(name))
-            {
-                // Obfuscate
-                _compiler.Obfuscate(body, (uint)(_rva + _offset));
-            }
+            // Obfuscate
+            _compiler.Obfuscate(ref body, (uint)(_rva + _offset));
 
             Array.Copy(body, 0, _bytes, _offset, body.Length);
 

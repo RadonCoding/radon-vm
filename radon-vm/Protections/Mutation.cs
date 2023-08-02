@@ -1,7 +1,6 @@
 ﻿using Iced.Intel;
-using System.Diagnostics;
 
-namespace VeProt_Native.Protections {
+namespace radon_vm.Protections {
     internal class Mutation : IProtection {
         private static Random _rand = new Random();
 
@@ -39,9 +38,7 @@ namespace VeProt_Native.Protections {
             return (byte)((value << shift) | (value >> (8 - shift)));
         }
 
-        private void MutateMov(Compiler compiler, Decoder decoder, Instruction instr, byte[] code, int offset) {
-            if (instr.Op0Kind != OpKind.Register || !instr.Op1Kind.IsImmediate()) return;
-
+        private void MutateMovRegImm(Compiler compiler, Decoder decoder, Instruction instr, byte[] code, int offset) {
             Console.WriteLine("Mutating: {0}", instr);
 
             var offsets = decoder.GetConstantOffsets(instr);
@@ -100,6 +97,25 @@ namespace VeProt_Native.Protections {
             }
         }
 
+        private void MutateMovRegReg(Compiler compiler, Decoder decoder, Instruction instr, byte[] code, int offset)
+        {
+            Console.WriteLine("Mutating: {0}", instr);
+
+            dynamic reg0 = ToAsmRegister(instr.Op0Register);
+            dynamic reg1 = ToAsmRegister(instr.Op1Register);
+
+            Assembler ass = new Assembler(64);
+            ass.push(reg1);
+            ass.pop(reg0);
+
+            using (var ms = new MemoryStream())
+            {
+                ass.Assemble(new StreamCodeWriter(ms), instr.IP);
+                byte[] assembled = ms.ToArray();
+                compiler.Replace(offset, instr.Length, assembled);
+            }
+        }
+
         public void Execute(Compiler compiler, uint oldSectionRVA, uint newSectionRVA, byte[] code) {
             var reader = new ByteArrayCodeReader(code.ToArray());
             var decoder = Decoder.Create(64, reader, oldSectionRVA);
@@ -119,7 +135,14 @@ namespace VeProt_Native.Protections {
 
                 switch (instr.OpCode.Code.Mnemonic()) {
                     case Mnemonic.Mov:
-                        MutateMov(compiler, decoder, instr, code, offset);
+                        if (instr.Op0Kind == OpKind.Register && instr.Op1Kind.IsImmediate())
+                        {
+                            MutateMovRegImm(compiler, decoder, instr, code, offset);
+                        } 
+                        else if (instr.Op0Register.GetSize() == 8 && instr.Op1Register.GetSize() == 8)
+                        {
+                            MutateMovRegReg(compiler, decoder, instr, code, offset);
+                        }
                         break;
                 }
             }

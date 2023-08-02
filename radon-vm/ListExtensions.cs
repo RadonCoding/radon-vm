@@ -1,7 +1,7 @@
 ﻿using System.Reflection.Emit;
 using System.Reflection;
 
-namespace VeProt_Native {
+namespace radon_vm {
     public static class ListExtensions {
         private static class ArrayAccessor<T> {
             public static Func<List<T>, T[]> Getter;

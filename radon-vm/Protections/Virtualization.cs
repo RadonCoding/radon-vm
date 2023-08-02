@@ -1,8 +1,7 @@
 ﻿using Iced.Intel;
-using System;
 using static Iced.Intel.AssemblerRegisters;
 
-namespace VeProt_Native.Protections.Virtualization
+namespace radon_vm.Protections
 {
     internal class Virtualization : IProtection
     {
