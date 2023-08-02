@@ -6,7 +6,8 @@ namespace radon_vm.Protections
     internal class Virtualization : IProtection
     {
         private static Mnemonic[] SUPPORTED_MNEMONICS = {
-            Mnemonic.Add
+            Mnemonic.Add,
+            Mnemonic.Sub
         };
 
         enum VMRegister
@@ -204,11 +205,9 @@ namespace radon_vm.Protections
 
         private byte[] Convert(Instruction instr)
         {
-            List<byte> bytes = new List<byte>
-            {
-                (byte)instr.Mnemonic,
-                (byte)instr.OpCount
-            };
+            var bytes = new List<byte>();
+            bytes.AddRange(BitConverter.GetBytes((short)instr.Mnemonic));
+            bytes.Add((byte)instr.OpCount);
 
             for (int i = 0; i < instr.OpCount; i++)
             {

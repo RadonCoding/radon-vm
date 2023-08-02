@@ -259,9 +259,15 @@ namespace radon_vm
 
                 if (adjustment.IsReplace)
                 {
-                    adjusted.RemoveRange(offset, adjustment.Replace!.Value);
-                    adjusted.InsertRange(offset, adjustment.Bytes);
-                    displacement += adjustment.Length;
+                    for (int i = 0; i < adjustment.Replace; i++)
+                    {
+                        adjusted[offset + i] = adjustment.Bytes[i];
+                    }
+                    if (adjustment.Bytes.Length > adjustment.Replace)
+                    {
+                        adjusted.InsertRange(offset + adjustment.Replace.Value, adjustment.Bytes[adjustment.Replace.Value..]);
+                        displacement += adjustment.Length;
+                    }
                 }
                 else
                 {
@@ -425,9 +431,9 @@ namespace radon_vm
 
             _references.Clear();
 
-            //Execute(new Virtualization(), oldSectionRVA, newSectionRVA, ref code);
-            //Execute(new Mutation(), oldSectionRVA, newSectionRVA, ref code);
-            Execute(new ControlFlow(), oldSectionRVA, newSectionRVA, ref code);
+            Execute(new Virtualization(), oldSectionRVA, newSectionRVA, ref code);
+            Execute(new Mutation(), oldSectionRVA, newSectionRVA, ref code);
+            //Execute(new ControlFlow(), oldSectionRVA, newSectionRVA, ref code);
 
             _newCodeSection = new PESection(".radon1",
                 SectionFlags.ContentCode | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,

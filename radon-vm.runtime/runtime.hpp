@@ -55,7 +55,7 @@ struct VMState {
 	};
 };
 
-enum VMMnemonic {
+enum class VMMnemonic {
 	INVALID = 0,
 	Aaa = 1,
 	Aad = 2,
@@ -1934,7 +1934,7 @@ enum VMMnemonic {
 	Wrmsrlist = 1875,
 	Wrmsrns = 1876,
 };
-enum VMOpKind {
+enum class VMOpKind {
 	Register,
 	NearBranch16,
 	NearBranch32,
@@ -1979,8 +1979,12 @@ enum VMRegister : int {
 	R14,
 	R15
 };
-enum VMRegisterPart {
+enum class VMRegisterPart {
 	Higher,
 	Lower,
 	None
+};
+enum class MathOperation {
+	Add,
+	Sub
 };

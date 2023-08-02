@@ -35,7 +35,7 @@ __declspec(safebuffers) void LoadFlags(uint64_t flags) {
 }
 
 // Move physical to virtual state
-__declspec(safebuffers) VMState* VMEntry() {
+__declspec(safebuffers)VMState* VMEntry() {
 	uint64_t registers[16];
 
 	__asm {
@@ -71,71 +71,107 @@ __declspec(safebuffers) VMState* VMEntry() {
 	return state;
 }
 
-void AddImmToMem(VMState* state, VMRegister reg0, uint8_t op0Size, uint64_t value0, uint64_t imm) {
+void MathImmToMem(MathOperation operation, VMState* state, VMRegister reg0, uint8_t op0Size, uint64_t value0, uint64_t imm) {
 	if (op0Size == 1) {
-		*reinterpret_cast<uint8_t*>(state->registers[reg0]) = value0 + imm;
+		if (operation == MathOperation::Add) {
+			*reinterpret_cast<uint8_t*>(state->registers[reg0]) = value0 + imm;
+		}
+		else if (operation == MathOperation::Sub) {
+			*reinterpret_cast<uint8_t*>(state->registers[reg0]) = value0 - imm;
+		}
 	}
 	else if (op0Size == 2) {
-		*reinterpret_cast<uint16_t*>(state->registers[reg0]) = value0 + imm;
+		if (operation == MathOperation::Add) {
+			*reinterpret_cast<uint16_t*>(state->registers[reg0]) = value0 + imm;
+		}
+		else if (operation == MathOperation::Sub) {
+			*reinterpret_cast<uint16_t*>(state->registers[reg0]) = value0 - imm;
+		}
 	}
 	else if (op0Size == 4) {
-		*reinterpret_cast<uint32_t*>(state->registers[reg0]) = value0 + imm;
+		if (operation == MathOperation::Add) {
+			*reinterpret_cast<uint32_t*>(state->registers[reg0]) = value0 + imm;
+		}
+		else if (operation == MathOperation::Sub) {
+			*reinterpret_cast<uint32_t*>(state->registers[reg0]) = value0 - imm;
+		}
 	}
 	else if (op0Size == 8) {
-		*reinterpret_cast<uint64_t*>(state->registers[reg0]) = value0 + imm;
+		if (operation == MathOperation::Add) {
+			*reinterpret_cast<uint64_t*>(state->registers[reg0]) = value0 + imm;
+		}
+		else if (operation == MathOperation::Sub) {
+			*reinterpret_cast<uint64_t*>(state->registers[reg0]) = value0 - imm;
+		}
 	}
 }
 
 template<typename T>
-void HandleAddImm(VMState* state, uint8_t* bytecode, int index) {
-	VMOpKind op0Kind = static_cast<VMOpKind>(bytecode[index + 2]);
-	uint8_t op0Size = bytecode[index + 3];
-	VMRegister reg0 = static_cast<VMRegister>(bytecode[index + 4]);
-	VMRegisterPart part0 = static_cast<VMRegisterPart>(bytecode[index + 5]);
+void HandleMathImm(MathOperation operation, VMState* state, uint8_t* bytecode, int index) {
+	VMOpKind op0Kind = static_cast<VMOpKind>(bytecode[index + 3]);
+	uint8_t op0Size = bytecode[index + 4];
+	VMRegister reg0 = static_cast<VMRegister>(bytecode[index + 5]);
+	VMRegisterPart part0 = static_cast<VMRegisterPart>(bytecode[index + 6]);
 
-	T imm = *reinterpret_cast<T*>(&bytecode[index + 8]);
+	T imm = *reinterpret_cast<T*>(&bytecode[index + 9]);
 
 	uint64_t op0Mask = (op0Size == 8) ? ~0ULL : (1ULL << (op0Size * 8)) - 1;
 
 	uint64_t value0 = (state->registers[reg0] >> (part0 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
 
 	if (op0Kind == VMOpKind::Register) {
-		state->registers[reg0] = value0 + imm;
+		if (operation == MathOperation::Add) {
+			state->registers[reg0] = value0 + imm;
+		} else if (operation == MathOperation::Sub) {
+			state->registers[reg0] = value0 - imm;
+		}
 	}
 	else if (op0Kind == VMOpKind::Memory) {
-		AddImmToMem(state, reg0, op0Size, value0, imm);
+		MathImmToMem(operation, state, reg0, op0Size, value0, imm);
 	}
 }
 
-void HandleAdd(VMState* state, uint8_t* bytecode, int index) {
-	VMOpKind op0Kind = static_cast<VMOpKind>(bytecode[index + 2]);
-	uint8_t op0Size = bytecode[index + 3];
-	VMRegister reg0 = static_cast<VMRegister>(bytecode[index + 4]);
-	VMRegisterPart part0 = static_cast<VMRegisterPart>(bytecode[index + 5]);
+void HandleMath(MathOperation operation, VMState* state, uint8_t* bytecode, int index) {
+	VMOpKind op0Kind = static_cast<VMOpKind>(bytecode[index + 3]);
+	uint8_t op0Size = bytecode[index + 4];
+	VMRegister reg0 = static_cast<VMRegister>(bytecode[index + 5]);
+	VMRegisterPart part0 = static_cast<VMRegisterPart>(bytecode[index + 6]);
 
-	VMOpKind op1Kind = static_cast<VMOpKind>(bytecode[index + 6]);
-	uint8_t op1Size = bytecode[index + 7];
+	VMOpKind op1Kind = static_cast<VMOpKind>(bytecode[index + 7]);
+	uint8_t op1Size = bytecode[index + 8];
 
 	uint64_t op0Mask = (op0Size == 8) ? ~0ULL : (1ULL << (op0Size * 8)) - 1;
 	uint64_t op1Mask = (op1Size == 8) ? ~0ULL : (1ULL << (op1Size * 8)) - 1;
 
 	if (op1Kind == VMOpKind::Register) {
-		VMRegister reg1 = static_cast<VMRegister>(bytecode[index + 8]);
-		VMRegisterPart part1 = static_cast<VMRegisterPart>(bytecode[index + 9]);
+		VMRegister reg1 = static_cast<VMRegister>(bytecode[index + 9]);
+		VMRegisterPart part1 = static_cast<VMRegisterPart>(bytecode[index + 10]);
 
 		uint64_t value0 = (state->registers[reg0] >> (part0 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
 		uint64_t value1 = (state->registers[reg1] >> (part1 == VMRegisterPart::Higher ? 8 : 0)) & op1Mask;
 
 		if (op0Kind == VMOpKind::Register) {
-			state->registers[reg0] = value0 + value1;
+			if (operation == MathOperation::Add) {
+				state->registers[reg0] = value0 + value1;
+			}
+			else if (operation == MathOperation::Sub) {
+				state->registers[reg0] = value0 - value1;
+			}
 		}
 		else if (op0Kind == VMOpKind::Memory) {
-			LI_FN(memcpy)(reinterpret_cast<uint64_t*>(state->registers[reg0]), &value1, op0Size);
+			if (operation == MathOperation::Add) {
+				uint64_t result = value0 + value1;
+				LI_FN(memcpy)(reinterpret_cast<uint64_t*>(state->registers[reg0]), &result, op0Size);
+			}
+			else if (operation == MathOperation::Sub) {
+				uint64_t result = value0 - value1;
+				LI_FN(memcpy)(reinterpret_cast<uint64_t*>(state->registers[reg0]), &result, op0Size);
+			}
 		}
 	}
 	else if (op1Kind == VMOpKind::Memory) {
-		VMRegister reg1 = static_cast<VMRegister>(bytecode[index + 8]);
-		VMRegisterPart part1 = static_cast<VMRegisterPart>(bytecode[index + 9]);
+		VMRegister reg1 = static_cast<VMRegister>(bytecode[index + 9]);
+		VMRegisterPart part1 = static_cast<VMRegisterPart>(bytecode[index + 10]);
 
 		if (part1 == VMRegisterPart::Higher) {
 			op1Mask = op1Mask >> 8;
@@ -148,40 +184,48 @@ void HandleAdd(VMState* state, uint8_t* bytecode, int index) {
 
 		value1 >>= (part1 == VMRegisterPart::Higher ? 8 : 0) & op0Mask;
 
-		state->registers[reg0] = value0 + value1;
+		if (operation == MathOperation::Add) {
+			state->registers[reg0] = value0 + value1;
+		}
+		else if (operation == MathOperation::Sub) {
+			state->registers[reg0] = value0 - value1;
+		}
 	}
 	else if (op1Kind == VMOpKind::Immediate8) {
-		HandleAddImm<uint8_t>(state, bytecode, index);
+		HandleMathImm<uint8_t>(operation, state, bytecode, index);
 	}
 	else if (op1Kind == VMOpKind::Immediate16) {
-		HandleAddImm<uint16_t>(state, bytecode, index);
+		HandleMathImm<uint16_t>(operation, state, bytecode, index);
 	}
 	else if (op1Kind == VMOpKind::Immediate8to16) {
-		HandleAddImm<int16_t>(state, bytecode, index);
+		HandleMathImm<int16_t>(operation, state, bytecode, index);
 	}
 	else if (op1Kind == VMOpKind::Immediate32) {
-		HandleAddImm<uint32_t>(state, bytecode, index);
+		HandleMathImm<uint32_t>(operation, state, bytecode, index);
 	}
 	else if (op1Kind == VMOpKind::Immediate8to32) {
-		HandleAddImm<int32_t>(state, bytecode, index);
+		HandleMathImm<int32_t>(operation, state, bytecode, index);
 	}
 	else if (op1Kind == VMOpKind::Immediate64) {
-		HandleAddImm<uint64_t>(state, bytecode, index);
+		HandleMathImm<uint64_t>(operation, state, bytecode, index);
 	}
 	else if (op1Kind == VMOpKind::Immediate8to64) {
-		HandleAddImm<int64_t>(state, bytecode, index);
+		HandleMathImm<int64_t>(operation, state, bytecode, index);
 	}
 	else if (op1Kind == VMOpKind::Immediate32to64) {
-		HandleAddImm<int64_t>(state, bytecode, index);
+		HandleMathImm<int64_t>(operation, state, bytecode, index);
 	}
 }
 
 __declspec(safebuffers) void VMDispatcher(VMState* state, uint8_t* bytecode, int index) {
-	VMMnemonic opCode = static_cast<VMMnemonic>(bytecode[index]);
-	uint8_t opCount = bytecode[index + 1];
+	VMMnemonic opCode = static_cast<VMMnemonic>(*reinterpret_cast<uint16_t*>(&bytecode[index]));
+	uint8_t opCount = bytecode[index + 3];
 
 	if (opCode == VMMnemonic::Add) {
-		HandleAdd(state, bytecode, index);
+		HandleMath(MathOperation::Add, state, bytecode, index);
+	}
+	else if (opCode == VMMnemonic::Sub) {
+		HandleMath(MathOperation::Sub, state, bytecode, index);
 	}
 }
 
