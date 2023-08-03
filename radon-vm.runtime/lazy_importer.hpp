@@ -24,6 +24,8 @@
  //   - Try #define LAZY_IMPORTER_RESOLVE_FORWARDED_EXPORTS
  //     This will enable forwarded export resolution globally instead of needing explicit `forwarded()` calls
 
+#define LAZY_IMPORTER_NO_FORCEINLINE
+
 #ifndef LAZY_IMPORTER_HPP
 #define LAZY_IMPORTER_HPP
 

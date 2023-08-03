@@ -243,6 +243,17 @@ namespace radon_vm.Protections
             return bytes.ToArray();
         }
 
+        private byte[] Encrypt(byte[] bytes, int key)
+        {
+            byte[] encrypted = new byte[bytes.Length];
+
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                encrypted[i] = (byte)(bytes[i] ^ key);
+            }
+            return encrypted;
+        }
+
         public void Execute(Compiler compiler, uint oldSectionRVA, uint newSectionRVA, byte[] code)
         {
             var reader = new ByteArrayCodeReader(code.ToArray());
@@ -271,8 +282,12 @@ namespace radon_vm.Protections
                 if (SUPPORTED_MNEMONICS.Contains(instr.Mnemonic))
                 {
                     // Convert the instruction to byte code format [opcode] [operands]
-                    byte[] bytes = Convert(instr);
-                    converted.Add(offset, bytes);
+                    int index = converted
+                        .Where(x => x.Key < offset)
+                        .Sum(x => x.Value.Length);
+                    var bytes = Encrypt(Convert(instr), index).ToList();
+                    bytes.Insert(0, (byte)bytes.Count);
+                    converted.Add(offset, bytes.ToArray());
                 }
             }
 

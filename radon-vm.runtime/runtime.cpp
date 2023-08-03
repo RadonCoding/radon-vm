@@ -40,12 +40,12 @@ void MathImmToMem(MathOperation operation, VMState* state, VMRegister reg0, uint
 }
 
 template<typename T> void HandleMathImm(MathOperation operation, VMState* state, uint8_t* bytecode, int index) {
-	VMOpKind op0Kind = static_cast<VMOpKind>(bytecode[index + 3]);
-	uint8_t op0Size = bytecode[index + 4];
-	VMRegister reg0 = static_cast<VMRegister>(bytecode[index + 5]);
-	VMRegisterPart part0 = static_cast<VMRegisterPart>(bytecode[index + 6]);
+	VMOpKind op0Kind = static_cast<VMOpKind>(bytecode[3]);
+	uint8_t op0Size = bytecode[4];
+	VMRegister reg0 = static_cast<VMRegister>(bytecode[5]);
+	VMRegisterPart part0 = static_cast<VMRegisterPart>(bytecode[6]);
 
-	T imm = *reinterpret_cast<T*>(&bytecode[index + 9]);
+	T imm = *reinterpret_cast<T*>(&bytecode[9]);
 
 	uint64_t op0Mask = (op0Size == 8) ? ~0ULL : (1ULL << (op0Size * 8)) - 1;
 
@@ -65,20 +65,20 @@ template<typename T> void HandleMathImm(MathOperation operation, VMState* state,
 }
 
 void HandleMath(MathOperation operation, VMState* state, uint8_t* bytecode, int index) {
-	VMOpKind op0Kind = static_cast<VMOpKind>(bytecode[index + 3]);
-	uint8_t op0Size = bytecode[index + 4];
-	VMRegister reg0 = static_cast<VMRegister>(bytecode[index + 5]);
-	VMRegisterPart part0 = static_cast<VMRegisterPart>(bytecode[index + 6]);
+	VMOpKind op0Kind = static_cast<VMOpKind>(bytecode[3]);
+	uint8_t op0Size = bytecode[4];
+	VMRegister reg0 = static_cast<VMRegister>(bytecode[5]);
+	VMRegisterPart part0 = static_cast<VMRegisterPart>(bytecode[6]);
 
-	VMOpKind op1Kind = static_cast<VMOpKind>(bytecode[index + 7]);
-	uint8_t op1Size = bytecode[index + 8];
+	VMOpKind op1Kind = static_cast<VMOpKind>(bytecode[7]);
+	uint8_t op1Size = bytecode[8];
 
 	uint64_t op0Mask = (op0Size == 8) ? ~0ULL : (1ULL << (op0Size * 8)) - 1;
 	uint64_t op1Mask = (op1Size == 8) ? ~0ULL : (1ULL << (op1Size * 8)) - 1;
 
 	if (op1Kind == VMOpKind::Register) {
-		VMRegister reg1 = static_cast<VMRegister>(bytecode[index + 9]);
-		VMRegisterPart part1 = static_cast<VMRegisterPart>(bytecode[index + 10]);
+		VMRegister reg1 = static_cast<VMRegister>(bytecode[9]);
+		VMRegisterPart part1 = static_cast<VMRegisterPart>(bytecode[10]);
 
 		uint64_t value0 = (state->registers[reg0] >> (part0 == VMRegisterPart::Higher ? 8 : 0)) & op0Mask;
 		uint64_t value1 = (state->registers[reg1] >> (part1 == VMRegisterPart::Higher ? 8 : 0)) & op1Mask;
@@ -103,8 +103,8 @@ void HandleMath(MathOperation operation, VMState* state, uint8_t* bytecode, int 
 		}
 	}
 	else if (op1Kind == VMOpKind::Memory) {
-		VMRegister reg1 = static_cast<VMRegister>(bytecode[index + 9]);
-		VMRegisterPart part1 = static_cast<VMRegisterPart>(bytecode[index + 10]);
+		VMRegister reg1 = static_cast<VMRegister>(bytecode[9]);
+		VMRegisterPart part1 = static_cast<VMRegisterPart>(bytecode[10]);
 
 		if (part1 == VMRegisterPart::Higher) {
 			op1Mask = op1Mask >> 8;
@@ -218,16 +218,30 @@ __declspec(safebuffers) VMState* VMEntry() {
 	return state;
 }
 
+uint8_t* Decrypt(uint8_t* bytes, uint8_t length, int key)
+{
+	uint8_t* decrpyted = reinterpret_cast<uint8_t*>(LI_FN(malloc)(length));
+
+	for (int i = 0; i < length; i++)
+	{
+		decrpyted[i] = bytes[i] ^ key;
+	}
+	return decrpyted;
+}
+
 __declspec(safebuffers) void VMDispatcher(VMState* state, uint8_t* bytecode, int index) {
-	VMMnemonic opCode = static_cast<VMMnemonic>(*reinterpret_cast<uint16_t*>(&bytecode[index]));
-	uint8_t opCount = bytecode[index + 3];
+	uint8_t length = bytecode[index];
+	uint8_t* decrypted = Decrypt(&bytecode[index + 1], length, index);
+
+	VMMnemonic opCode = static_cast<VMMnemonic>(*reinterpret_cast<uint16_t*>(&decrypted[0]));
 
 	if (opCode == VMMnemonic::Add) {
-		HandleMath(MathOperation::Add, state, bytecode, index);
+		HandleMath(MathOperation::Add, state, decrypted, index);
 	}
 	else if (opCode == VMMnemonic::Sub) {
-		HandleMath(MathOperation::Sub, state, bytecode, index);
+		HandleMath(MathOperation::Sub, state, decrypted, index);
 	}
+	LI_FN(free)(decrypted);
 }
 
 // Move virtual to physical state

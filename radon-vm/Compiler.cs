@@ -235,11 +235,23 @@ namespace radon_vm
                     if (inserted.Any(x => src >= x.Key && src < x.Key + x.Value.Bytes.Length))
                     {
                         // The logic here is that we want to ignore the adjustment that this instruction is part of so we add the size of the adjustment to it's beginning
-                        foreach (var insert in inserted.Where(x => x.Key + x.Value.Length < src))
+                        foreach (var insert in inserted)
                         {
-                            dst -= (uint)insert.Value.Length;
+                            int end = insert.Key + insert.Value.Length;
+
+                            if (end < src && end < (uint)(dst - newIP))
+                            {
+                                dst -= (uint)insert.Value.Length;
+                            }
                         }
-                        _references[src] = dst - (newIP - oldIP);
+
+                        ulong newSectionSize = ((ulong)code.Length).Align(File.OptionalHeader.SectionAlignment);
+                        bool isInSameSection = dst >= newIP && dst < newIP + newSectionSize;
+
+                        if (!isInSameSection)
+                        {
+                            _references[src] = dst - (newIP - oldIP);
+                        }
                     }
                 }
             }
@@ -433,7 +445,6 @@ namespace radon_vm
 
             Execute(new Virtualization(), oldSectionRVA, newSectionRVA, ref code);
             Execute(new Mutation(), oldSectionRVA, newSectionRVA, ref code);
-            //Execute(new ControlFlow(), oldSectionRVA, newSectionRVA, ref code);
 
             _newCodeSection = new PESection(".radon1",
                 SectionFlags.ContentCode | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,
