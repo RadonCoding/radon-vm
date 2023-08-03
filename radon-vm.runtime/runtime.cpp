@@ -2,74 +2,7 @@
 #include <iostream>
 #include <Windows.h>
 #include "lazy_importer.hpp"
-
-__declspec(naked) void LoadRegisters(uint64_t* registers) {
-	__asm {
-		mov rax, [rcx]
-		mov rdx, [rcx + 16]
-		mov rbx, [rcx + 24]
-		//mov rsp, [rcx + 32]
-		//mov rbp, [rcx + 40]
-		mov rsi, [rcx + 48]
-		mov rdi, [rcx + 56]
-		mov r8, [rcx + 64]
-		mov r9, [rcx + 72]
-		mov r10, [rcx + 80]
-		mov r11, [rcx + 88]
-		mov r12, [rcx + 96]
-		mov r13, [rcx + 104]
-		mov r14, [rcx + 112]
-		mov r15, [rcx + 120]
-
-		mov rcx, [rcx + 8]
-
-		ret
-	}
-}
-
-__declspec(safebuffers) void LoadFlags(uint64_t flags) {
-	__asm {
-		push flags
-		popfq
-	}
-}
-
-// Move physical to virtual state
-__declspec(safebuffers)VMState* VMEntry() {
-	uint64_t registers[16];
-
-	__asm {
-		mov[registers], rax
-		mov[registers + 8], rcx
-		mov[registers + 16], rdx
-		mov[registers + 24], rbx
-		mov[registers + 32], rsp
-		mov[registers + 40], rbp
-		mov[registers + 48], rsi
-		mov[registers + 56], rdi
-		mov[registers + 64], r8
-		mov[registers + 72], r9
-		mov[registers + 80], r10
-		mov[registers + 88], r11
-		mov[registers + 96], r12
-		mov[registers + 104], r13
-		mov[registers + 112], r14
-		mov[registers + 120], r15
-	}
-
-	uint64_t flags;
-
-	__asm {
-		pushfq
-		pop flags
-	}
-
-	VMState* state = reinterpret_cast<VMState*>(LI_FN(malloc)(sizeof(VMState)));
-	LI_FN(memcpy)(state->registers, registers, sizeof(state->registers) + 8);
-	LI_FN(memcpy)(&state->rflags, &flags, sizeof(flags));
-
-	return state;
-}
+#include "vm.hpp"
 
 void MathImmToMem(MathOperation operation, VMState* state, VMRegister reg0, uint8_t op0Size, uint64_t value0, uint64_t imm) {
 	if (op0Size == 1) {
@@ -106,8 +39,7 @@ void MathImmToMem(MathOperation operation, VMState* state, VMRegister reg0, uint
 	}
 }
 
-template<typename T>
-void HandleMathImm(MathOperation operation, VMState* state, uint8_t* bytecode, int index) {
+template<typename T> void HandleMathImm(MathOperation operation, VMState* state, uint8_t* bytecode, int index) {
 	VMOpKind op0Kind = static_cast<VMOpKind>(bytecode[index + 3]);
 	uint8_t op0Size = bytecode[index + 4];
 	VMRegister reg0 = static_cast<VMRegister>(bytecode[index + 5]);
@@ -122,7 +54,8 @@ void HandleMathImm(MathOperation operation, VMState* state, uint8_t* bytecode, i
 	if (op0Kind == VMOpKind::Register) {
 		if (operation == MathOperation::Add) {
 			state->registers[reg0] = value0 + imm;
-		} else if (operation == MathOperation::Sub) {
+		}
+		else if (operation == MathOperation::Sub) {
 			state->registers[reg0] = value0 - imm;
 		}
 	}
@@ -215,6 +148,74 @@ void HandleMath(MathOperation operation, VMState* state, uint8_t* bytecode, int 
 	else if (op1Kind == VMOpKind::Immediate32to64) {
 		HandleMathImm<int64_t>(operation, state, bytecode, index);
 	}
+}
+
+__declspec(naked) void LoadRegisters(uint64_t* registers) {
+	__asm {
+		mov rax, [rcx]
+		mov rdx, [rcx + 16]
+		mov rbx, [rcx + 24]
+		//mov rsp, [rcx + 32]
+		//mov rbp, [rcx + 40]
+		mov rsi, [rcx + 48]
+		mov rdi, [rcx + 56]
+		mov r8, [rcx + 64]
+		mov r9, [rcx + 72]
+		mov r10, [rcx + 80]
+		mov r11, [rcx + 88]
+		mov r12, [rcx + 96]
+		mov r13, [rcx + 104]
+		mov r14, [rcx + 112]
+		mov r15, [rcx + 120]
+
+		mov rcx, [rcx + 8]
+
+		ret
+	}
+}
+
+__declspec(safebuffers) void LoadFlags(uint64_t flags) {
+	__asm {
+		push flags
+		popfq
+	}
+}
+
+// Move physical to virtual state
+__declspec(safebuffers) VMState* VMEntry() {
+	uint64_t registers[16];
+
+	__asm {
+		mov[registers], rax
+		mov[registers + 8], rcx
+		mov[registers + 16], rdx
+		mov[registers + 24], rbx
+		mov[registers + 32], rsp
+		mov[registers + 40], rbp
+		mov[registers + 48], rsi
+		mov[registers + 56], rdi
+		mov[registers + 64], r8
+		mov[registers + 72], r9
+		mov[registers + 80], r10
+		mov[registers + 88], r11
+		mov[registers + 96], r12
+		mov[registers + 104], r13
+		mov[registers + 112], r14
+		mov[registers + 120], r15
+	}
+
+	uint64_t flags;
+
+	__asm {
+		pushfq
+		pop flags
+	}
+
+	VMState* state = reinterpret_cast<VMState*>(LI_FN(malloc)(sizeof(VMState)));
+	LI_FN(memcpy)(state->registers, registers, sizeof(state->registers) + 8);
+	LI_FN(memcpy)(&state->rflags, &flags, sizeof(flags));
+
+	return state;
 }
 
 __declspec(safebuffers) void VMDispatcher(VMState* state, uint8_t* bytecode, int index) {

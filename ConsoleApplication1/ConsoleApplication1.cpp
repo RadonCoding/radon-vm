@@ -2,8 +2,8 @@
 //
 
 #include <iostream>
-#include "../radon-vm.runtime/runtime.cpp"
 #include <cassert>
+#include "../radon-vm.runtime/runtime.cpp"
 
 // add rax, imm
 bool test1() {
@@ -52,6 +52,7 @@ bool test1() {
 	}
 	return result == imm;
 }
+
 // sub rax, imm
 bool test2() {
 	const uint64_t imm = 64;

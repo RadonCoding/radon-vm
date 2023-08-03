@@ -169,6 +169,7 @@
   <ItemGroup>
     <ClInclude Include="lazy_importer.hpp" />
     <ClInclude Include="runtime.hpp" />
+    <ClInclude Include="vm.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="runtime.cpp" />

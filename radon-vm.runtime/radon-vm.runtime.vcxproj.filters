@@ -21,6 +21,9 @@
     <ClInclude Include="lazy_importer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="vm.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="runtime.cpp">
