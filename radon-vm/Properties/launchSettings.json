@@ -2,7 +2,7 @@
   "profiles": {
     "radon-vm": {
       "commandName": "Project",
-      "commandLineArgs": "C:\\Users\\radon\\Desktop\\crack-me.exe"
+      "commandLineArgs": "YOURFILEPATH"
     }
   }
 }
