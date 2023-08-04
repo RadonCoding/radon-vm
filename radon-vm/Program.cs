@@ -7,20 +7,20 @@
             if (string.IsNullOrEmpty(inputDir)) {
                 return;
             }
+            
             string outputDir = Path.Combine(inputDir, "Protected");
-
-            if (Directory.Exists(outputDir)) {
-                Directory.Delete(outputDir, true);
-            }
-            Directory.CreateDirectory(outputDir);
-
             string outputPath = Path.Combine(outputDir, Path.GetFileName(inputPath));
 
-            File.Copy(inputPath, outputPath, true);
 
-            Compiler compiler = new Compiler(outputPath);
-            compiler.Protect();
-            compiler.Save();
-        }
+            try {
+                Directory.CreateDirectory(outputDir);
+    
+                File.Copy(inputPath, outputPath, true);
+    
+                Compiler compiler = new Compiler(outputPath);
+                compiler.Protect();
+                compiler.Save();
+        } catch (Exception e) {
+                Console.WriteLine($"File error: {e.Message}");
     }
 }
