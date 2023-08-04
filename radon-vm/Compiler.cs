@@ -237,7 +237,7 @@ namespace radon_vm
                         // The logic here is that we want to ignore the adjustment that this instruction is part of so we add the size of the adjustment to it's beginning
                         foreach (var insert in inserted)
                         {
-                            int end = insert.Key + insert.Value.Length;
+                            int end = insert.Key + insert.Value.Bytes.Length;
 
                             if (end < src && end < (uint)(dst - newIP))
                             {

@@ -44,7 +44,7 @@ namespace radon_vm.Protections {
             var offsets = decoder.GetConstantOffsets(instr);
             var size = offsets.ImmediateSize;
 
-            byte add = (byte)_rand.Next(1, byte.MaxValue);
+            byte add = 255; //(byte)_rand.Next(1, byte.MaxValue);
             byte xor = (byte)_rand.Next(1, byte.MaxValue);
             byte rot = (byte)_rand.Next(1, byte.MaxValue);
 

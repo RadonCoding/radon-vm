@@ -19,12 +19,18 @@ namespace radon_vm {
             return new IntPtr(lib + symbol.Address - symbol.ModBase);
         }
 
-        public static ulong GetIP(string name)
+        public static PESection GetSection(string name)
         {
             var symbol = GetSymbol(name);
+            var section = GetSection((uint)(symbol.Address - symbol.ModBase));
+            return section;
+        }
+
+        public static PESection GetSection(uint address)
+        {
             var file = PEFile.FromFile(DLL_NAME);
-            var section = file.GetSectionContainingRva((uint)(symbol.Address - symbol.ModBase));
-            return section.Rva;
+            var section = file.GetSectionContainingRva(address);
+            return section;
         }
 
         public static string GetName(ulong address)

@@ -1,4 +1,3 @@
-#include "runtime.hpp"
 #include <iostream>
 #include <Windows.h>
 #include "lazy_importer.hpp"

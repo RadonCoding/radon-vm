@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="runtime.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="lazy_importer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -91,12 +91,16 @@ namespace radon_vm.Protections
                     return VMRegister.RSP;
                 case Register.SP:
                     return VMRegister.RSP;
+                case Register.SPL:
+                    return VMRegister.RSP;
 
                 case Register.RBP:
                     return VMRegister.RBP;
                 case Register.EBP:
                     return VMRegister.RBP;
                 case Register.BP:
+                    return VMRegister.RBP;
+                case Register.BPL:
                     return VMRegister.RBP;
 
                 case Register.RSI:
@@ -105,12 +109,16 @@ namespace radon_vm.Protections
                     return VMRegister.RSI;
                 case Register.SI:
                     return VMRegister.RSI;
+                case Register.SIL:
+                    return VMRegister.RSI;
 
                 case Register.RDI:
                     return VMRegister.RDI;
                 case Register.EDI:
                     return VMRegister.RDI;
                 case Register.DI:
+                    return VMRegister.RDI;
+                case Register.DIL:
                     return VMRegister.RDI;
 
                 case Register.R8:
@@ -119,12 +127,16 @@ namespace radon_vm.Protections
                     return VMRegister.R8;
                 case Register.R8W:
                     return VMRegister.R8;
+                case Register.R8L: 
+                    return VMRegister.R8;
 
                 case Register.R9:
                     return VMRegister.R9;
                 case Register.R9D:
                     return VMRegister.R9;
                 case Register.R9W:
+                    return VMRegister.R9;
+                case Register.R9L:
                     return VMRegister.R9;
 
                 case Register.R10:
@@ -133,12 +145,16 @@ namespace radon_vm.Protections
                     return VMRegister.R10;
                 case Register.R10W:
                     return VMRegister.R10;
+                case Register.R10L:
+                    return VMRegister.R10;
 
                 case Register.R11:
                     return VMRegister.R11;
                 case Register.R11D:
                     return VMRegister.R11;
                 case Register.R11W:
+                    return VMRegister.R11;
+                case Register.R11L:
                     return VMRegister.R11;
 
                 case Register.R12:
@@ -147,12 +163,16 @@ namespace radon_vm.Protections
                     return VMRegister.R12;
                 case Register.R12W:
                     return VMRegister.R12;
+                case Register.R12L:
+                    return VMRegister.R12;
 
                 case Register.R13:
                     return VMRegister.R13;
                 case Register.R13D:
                     return VMRegister.R13;
                 case Register.R13W:
+                    return VMRegister.R13;
+                case Register.R13L:
                     return VMRegister.R13;
 
                 case Register.R14:
@@ -161,12 +181,16 @@ namespace radon_vm.Protections
                     return VMRegister.R14;
                 case Register.R14W:
                     return VMRegister.R14;
+                case Register.R14L:
+                    return VMRegister.R14;
 
                 case Register.R15:
                     return VMRegister.R15;
                 case Register.R15D:
                     return VMRegister.R15;
                 case Register.R15W:
+                    return VMRegister.R15;
+                case Register.R15L:
                     return VMRegister.R15;
 
                 default:

@@ -1,4 +1,7 @@
-﻿using Iced.Intel;
+﻿using AsmResolver;
+using AsmResolver.PE.File;
+using AsmResolver.PE.File.Headers;
+using Iced.Intel;
 using System.Runtime.InteropServices;
 
 namespace radon_vm
@@ -81,6 +84,8 @@ namespace radon_vm
             ulong start = symbol.Address - symbol.ModBase;
             ulong end = start + symbol.Size;
 
+            var section = Runtime.GetSection(name);
+
             // Fix calls
             for (int i = 0; i < instrs.Count; i++)
             {
@@ -92,9 +97,18 @@ namespace radon_vm
 
                     if (!(target >= start && target < end))
                     {
-                        string current = Runtime.GetName(target);
-                        Console.WriteLine("Injecting: {0}", current);
-                        _compiler.SetTarget(ref instr, Inject(current));
+                        bool isInSameSection = target >= section.Rva && target < section.Rva + section.GetVirtualSize();
+
+                        if (isInSameSection)
+                        {
+                            string current = Runtime.GetName(target);
+                            Console.WriteLine("Injecting: {0}", current);
+                            _compiler.SetTarget(ref instr, Inject(current));
+                        } 
+                        else
+                        {
+                            throw new NotImplementedException();
+                        }
                     }
                 }
                 instrs[i] = instr;
