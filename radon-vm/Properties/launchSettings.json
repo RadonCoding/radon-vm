@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "radon-vm": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Users\\Radon\\Desktop\\crack-me.exe"
+    }
+  }
+}
