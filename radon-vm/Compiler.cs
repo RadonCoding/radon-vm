@@ -154,10 +154,7 @@ namespace radon_vm
                 // Fill rest of insertion with NOPs
                 Array.Resize(ref insertion, replace);
 
-                for (int i = 0; i < replace - original; i++)
-                {
-                    insertion[original + i] = 0x90;
-                }
+                Array.Fill(insertion, (byte)0x90, original, replace - original);
             }
             _adjustments.Add(new Adjustment(offset, replace, insertion));
         }
