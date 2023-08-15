@@ -61,6 +61,11 @@ namespace radon_vm
             }
         }
 
+        public int OffsetOf(string name)
+        {
+            return (int)(_injected[name] - _rva);
+        }
+
         public unsafe uint Inject(string name)
         {
             if (_injected.ContainsKey(name))

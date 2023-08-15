@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using radon_vm.Protections;
 using System.Diagnostics;
 using System.Drawing;
+using System.Security.Cryptography;
 
 namespace radon_vm
 {
@@ -407,6 +408,34 @@ namespace radon_vm
 
             // Assemble the code with adjustments
             Reassemble(ref code, newSectionRVA, pe);
+
+            for (int i = 0; i < Virtualization.Fixups.Count; i++)
+            {
+                int start = _injector.OffsetOf("VMBytecode");
+                int index = Virtualization.Fixups[i];
+
+                byte[] bytes = _injector.Bytes[(start + index)..];
+                byte length = bytes[0];
+                byte[] decrypted = Virtualization.Crypt(bytes[1..length], index);
+
+                ulong dst = BitConverter.ToUInt64(decrypted, 3);
+
+                bool isInSameSection = dst >= newSectionRVA && dst < newSectionRVA + newSectionSize;
+
+                if (isInSameSection)
+                {
+                    uint target = (uint)(dst - newSectionRVA);
+
+                    foreach (var adjustment in _adjustments.Where(x => x.Offset < target))
+                    {
+                        dst += (uint)adjustment.Length;
+                    }
+
+                    Console.WriteLine("Fixup: 0x{0}", dst.ToString("X16"));
+
+                    Virtualization.Crypt(BitConverter.GetBytes(dst), index).CopyTo(_injector.Bytes, start + index + 3);
+                }
+            }
 
             _references.Clear();
             _adjustments.Clear();

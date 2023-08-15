@@ -1,5 +1,7 @@
-﻿namespace radon_vm {
-    internal class Program {
+﻿namespace radon_vm
+{
+    internal class Program
+    {
         private static void Main(string[] args)
         {
             string inputPath = args[0];
@@ -13,20 +15,13 @@
             string outputDir = Path.Combine(inputDir, "Protected");
             string outputPath = Path.Combine(outputDir, Path.GetFileName(inputPath));
 
-            try
-            {
-                Directory.CreateDirectory(outputDir);
+            Directory.CreateDirectory(outputDir);
 
-                File.Copy(inputPath, outputPath, true);
+            File.Copy(inputPath, outputPath, true);
 
-                Compiler compiler = new Compiler(outputPath);
-                compiler.Protect();
-                compiler.Save();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
+            Compiler compiler = new Compiler(outputPath);
+            compiler.Protect();
+            compiler.Save();
         }
     }
 }

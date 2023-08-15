@@ -5,6 +5,7 @@
 #include <cassert>
 #include "../radon-vm.runtime/runtime.cpp"
 #include <chrono>
+#include <iomanip>
 
 void Encrypt(uint8_t* bytes, uint8_t length, int key)
 {
@@ -236,6 +237,62 @@ auto since(std::chrono::time_point<clock_t, duration_t> const& start)
 	return std::chrono::duration_cast<result_t>(clock_t::now() - start);
 }
 
+// call cs:InitializeCriticalSectionAndSpinCount
+bool test5() {
+	uint16_t mnemonic = static_cast<uint16_t>(VMMnemonic::Call);
+	uintptr_t target = reinterpret_cast<uintptr_t>(&InitializeCriticalSectionAndSpinCount) - reinterpret_cast<uintptr_t>(GetModuleHandleA(nullptr));
+
+	uint8_t bytecode[] = {
+		0,
+		static_cast<uint8_t>(mnemonic & 0xFF),
+		static_cast<uint8_t>((mnemonic >> 8) & 0xFF),
+		1,
+		static_cast<uint8_t>(VMOpKind::Immediate64),
+		static_cast<uint8_t>(target & 0xFF),
+		static_cast<uint8_t>((target >> 8) & 0xFF),
+		static_cast<uint8_t>((target >> 16) & 0xFF),
+		static_cast<uint8_t>((target >> 24) & 0xFF),
+		static_cast<uint8_t>((target >> 32) & 0xFF),
+		static_cast<uint8_t>((target >> 40) & 0xFF),
+		static_cast<uint8_t>((target >> 48) & 0xFF),
+		static_cast<uint8_t>((target >> 56) & 0xFF),
+	};
+
+	bytecode[0] = sizeof(bytecode) - 1;
+
+	Encrypt(bytecode, sizeof(bytecode), 0);
+
+	CRITICAL_SECTION section;
+
+	__asm {
+		lea rcx, section
+		mov rdx, 4000
+	}
+
+	__asm {
+		call VMEntry
+
+		mov rcx, rax
+
+		push rcx
+
+		lea rdx, bytecode
+		mov r8d, 0
+		call VMDispatcher
+
+		pop rcx
+
+		call VMExit
+	}
+
+	int result = 0;
+
+	__asm {
+		mov result, rax
+	}
+	return result != 0;
+}
+
 int main()
 {
 	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
@@ -244,12 +301,7 @@ int main()
 	std::cout << (test2() ? "SUCCESS" : "FAILURE") << std::endl;
 	std::cout << (test3() ? "SUCCESS" : "FAILURE") << std::endl;
 	std::cout << (test4() ? "SUCCESS" : "FAILURE") << std::endl;
+	std::cout << (test5() ? "SUCCESS" : "FAILURE") << std::endl;
 
-	for (int i = 0; i < 1000; i++) {
-		test1();
-		test2();
-		test3();
-		test4();
-	}
 	std::cout << "Elapsed: " << since(start).count() << "ms" << std::endl;
 }

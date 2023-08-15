@@ -49,6 +49,7 @@ struct VMState {
 			uint64_t id : 1;
 		};
 	};
+	uint64_t call;
 };
 
 enum class VMMnemonic {

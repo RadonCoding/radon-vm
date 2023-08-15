@@ -1,14 +1,16 @@
 ﻿using Iced.Intel;
+using System;
+using System.Diagnostics;
 using static Iced.Intel.AssemblerRegisters;
 
 namespace radon_vm.Protections
 {
     internal class Virtualization : IProtection
     {
-        private static Mnemonic[] SUPPORTED_MNEMONICS = {
-            Mnemonic.Add,
-            Mnemonic.Sub
-        };
+        public static List<int> Fixups { get { return _fixups; } }
+
+        // Offset of instruction in section and fixup for VM bytecode
+        private static List<int> _fixups = new List<int>();
 
         enum VMRegister
         {
@@ -127,7 +129,7 @@ namespace radon_vm.Protections
                     return VMRegister.R8;
                 case Register.R8W:
                     return VMRegister.R8;
-                case Register.R8L: 
+                case Register.R8L:
                     return VMRegister.R8;
 
                 case Register.R9:
@@ -227,7 +229,7 @@ namespace radon_vm.Protections
             }
         }
 
-        private byte[] Convert(Instruction instr)
+        private byte[] Convert(int index, Instruction instr)
         {
             var bytes = new List<byte>();
             bytes.AddRange(BitConverter.GetBytes((short)instr.Mnemonic));
@@ -255,10 +257,24 @@ namespace radon_vm.Protections
                 else if (kind == OpKind.Memory)
                 {
                     Register reg = instr.MemoryBase;
-                    bytes.Add((byte)reg.GetSize());
-                    bytes.Add((byte)ToVMRegister(reg));
-                    bytes.Add((byte)GetRegisterPart(reg));
+
+                    if (instr.IsIPRelativeMemoryOperand)
+                    {
+                        _fixups.Add(index);
+                        bytes.AddRange(BitConverter.GetBytes(instr.IPRelativeMemoryAddress));
+                    }
+                    else
+                    {
+                        bytes.Add((byte)reg.GetSize());
+                        bytes.Add((byte)ToVMRegister(reg));
+                        bytes.Add((byte)GetRegisterPart(reg));
+                    }
                 }
+                /*else if (kind == OpKind.NearBranch16 || kind == OpKind.NearBranch32 || kind == OpKind.NearBranch64)
+                {
+                    _fixups.Add(index);
+                    bytes.AddRange(BitConverter.GetBytes(instr.NearBranchTarget));
+                }*/
                 else
                 {
                     throw new NotImplementedException();
@@ -267,7 +283,7 @@ namespace radon_vm.Protections
             return bytes.ToArray();
         }
 
-        private byte[] Encrypt(byte[] bytes, int key)
+        public static byte[] Crypt(byte[] bytes, int key)
         {
             byte[] encrypted = new byte[bytes.Length];
 
@@ -278,38 +294,67 @@ namespace radon_vm.Protections
             return encrypted;
         }
 
+        private void Virtualize(Compiler compiler, Instruction instr, uint oldSectionRVA, uint newSectionRVA, int offset, int index, uint bytecode, uint entry, uint dispatcher, uint exit)
+        {
+            Console.WriteLine("Virtualizing: {0}", instr);
+
+            Assembler ass = new Assembler(64);
+
+            // VMEntry returns the address to the beginning of VMState
+            ass.call(entry);
+
+            ass.mov(rcx, rax);
+
+            ass.push(rcx);
+
+            ass.AddInstruction(Instruction.Create(Code.Lea_r64_m, rdx,
+                new MemoryOperand(Register.RIP, Register.None, 1, bytecode, 1)));
+            ass.mov(r8d, index);
+            ass.call(dispatcher);
+
+            ass.pop(rcx);
+
+            ass.call(exit);
+
+            using (var ms = new MemoryStream())
+            {
+                ass.Assemble(new StreamCodeWriter(ms), instr.IP - (newSectionRVA - oldSectionRVA));
+                byte[] assembled = ms.ToArray();
+                compiler.Replace(offset, instr.Length, assembled);
+            }
+        }
+
+        private bool IsSupported(Instruction instr)
+        {
+            if (instr.Op0Register != Register.RSP && instr.Op0Register != Register.RBP && (instr.Mnemonic == Mnemonic.Add || instr.Mnemonic == Mnemonic.Sub))
+            {
+                return true;
+            } 
+            else if (instr.IsIPRelativeMemoryOperand && instr.Mnemonic == Mnemonic.Call)
+            {
+                // NOT SUPPORTED YET
+                //return true;
+            }
+            return false;
+        }
+
         public void Execute(Compiler compiler, uint oldSectionRVA, uint newSectionRVA, byte[] code)
         {
-            var reader = new ByteArrayCodeReader(code.ToArray());
-            var decoder = Decoder.Create(64, reader, oldSectionRVA);
-
-            var instrs = new List<Instruction>();
-
-            while (reader.CanReadByte)
-            {
-                decoder.Decode(out var instr);
-
-                if (!instr.IsInvalid)
-                {
-                    instrs.Add(instr);
-                }
-            }
+            var instrs = compiler.GetInstructions(code, newSectionRVA);
 
             var converted = new Dictionary<int, byte[]>();
 
             foreach (var instr in instrs)
             {
-                if (instr.Op0Register == Register.RSP || instr.Op0Register == Register.RBP) continue;
+                int offset = (int)(instr.IP - newSectionRVA);
 
-                int offset = (int)(instr.IP - oldSectionRVA);
-
-                if (SUPPORTED_MNEMONICS.Contains(instr.Mnemonic))
+                if (IsSupported(instr))
                 {
                     // Convert the instruction to byte code format [opcode] [operands]
                     int index = converted
                         .Where(x => x.Key < offset)
                         .Sum(x => x.Value.Length);
-                    var bytes = Encrypt(Convert(instr), index).ToList();
+                    var bytes = Crypt(Convert(index, instr), index).ToList();
                     bytes.Insert(0, (byte)bytes.Count);
                     converted.Add(offset, bytes.ToArray());
                 }
@@ -325,42 +370,14 @@ namespace radon_vm.Protections
 
             foreach (var instr in instrs)
             {
-                if (instr.Op0Register == Register.RSP || instr.Op0Register == Register.RBP) continue;
+                int offset = (int)(instr.IP - newSectionRVA);
 
-                int offset = (int)(instr.IP - oldSectionRVA);
-
-                if (SUPPORTED_MNEMONICS.Contains(instr.Mnemonic))
+                if (IsSupported(instr))
                 {
-                    Console.WriteLine("Virtualizing: {0}", instr);
-
-                    Assembler ass = new Assembler(64);
-
                     int index = converted
-                        .Where(x => x.Key < offset)
-                        .Sum(x => x.Value.Length);
-
-                    // VMEntry returns the address to the beginning of VMState
-                    ass.call(entry);
-
-                    ass.mov(rcx, rax);
-
-                    ass.push(rcx);
-
-                    ass.AddInstruction(Instruction.Create(Code.Lea_r64_m, rdx,
-                        new MemoryOperand(Register.RIP, Register.None, 1, bytecode, 1)));
-                    ass.mov(r8d, index);
-                    ass.call(dispatcher);
-
-                    ass.pop(rcx);
-
-                    ass.call(exit);
-
-                    using (var ms = new MemoryStream())
-                    {
-                        ass.Assemble(new StreamCodeWriter(ms), instr.IP);
-                        byte[] assembled = ms.ToArray();
-                        compiler.Replace(offset, instr.Length, assembled);
-                    }
+                            .Where(x => x.Key < offset)
+                            .Sum(x => x.Value.Length);
+                    Virtualize(compiler, instr, oldSectionRVA, newSectionRVA, offset, index, bytecode, entry, dispatcher, exit);
                 }
             }
         }
