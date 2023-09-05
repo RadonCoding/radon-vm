@@ -37,9 +37,13 @@ namespace radon_vm
         private PESection? _oldCodeSection;
         private PESection? _newCodeSection;
 
-        public Compiler(string filename)
+        private bool _packer;
+
+        public Compiler(string filename, bool packer)
         {
             _filename = filename;
+            _packer = packer;
+
             _file = PEFile.FromFile(filename);
             _image = PEImage.FromFile(_file);
 
@@ -50,7 +54,7 @@ namespace radon_vm
 
             _adjustments = new List<Adjustment>();
 
-            PESection inject = new PESection(".radon0", SectionFlags.ContentCode | SectionFlags.ContentInitializedData | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,
+            PESection inject = new PESection(".radon2", SectionFlags.ContentCode | SectionFlags.ContentInitializedData | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,
                 new DataSegment(new byte[InjectHelper.SECTION_SIZE]));
             _file.Sections.Add(inject);
             _file.UpdateHeaders();
@@ -83,27 +87,28 @@ namespace radon_vm
                 fixed (byte* pImage = image)
                 {
                     uint value = (uint)(*(ulong*)(pImage + reloc.Location.Offset) - _image.ImageBase);
-                    var targetSection = _file.GetSectionContainingRva(value);
 
-                    if (targetSection.Rva != oldSection.Rva) continue;
+                    if (_file.TryGetSectionContainingRva(value, out var targetSection)) {
+                        if (targetSection.Rva != oldSection.Rva) continue;
 
-                    uint offset = value - targetSection.Rva;
-                    ulong newTarget = _image.ImageBase + newSection.Rva + _offsets[offset];
+                        uint offset = value - targetSection.Rva;
+                        ulong newTarget = _image.ImageBase + newSection.Rva + _offsets[offset];
 
-                    switch (reloc.Type)
-                    {
-                        case RelocationType.HighLow:
-                            {
-                                uint* pReloc = (uint*)(pImage + reloc.Location.Offset);
-                                *pReloc = (uint)newTarget;
-                            }
-                            break;
-                        case RelocationType.Dir64:
-                            {
-                                ulong* pReloc = (ulong*)(pImage + reloc.Location.Offset);
-                                *pReloc = newTarget;
-                            }
-                            break;
+                        switch (reloc.Type)
+                        {
+                            case RelocationType.HighLow:
+                                {
+                                    uint* pReloc = (uint*)(pImage + reloc.Location.Offset);
+                                    *pReloc = (uint)newTarget;
+                                }
+                                break;
+                            case RelocationType.Dir64:
+                                {
+                                    ulong* pReloc = (ulong*)(pImage + reloc.Location.Offset);
+                                    *pReloc = newTarget;
+                                }
+                                break;
+                        }
                     }
                 }
             }
@@ -408,35 +413,6 @@ namespace radon_vm
 
             // Assemble the code with adjustments
             Reassemble(ref code, newSectionRVA, pe);
-
-            for (int i = 0; i < Virtualization.Fixups.Count; i++)
-            {
-                int start = _injector.OffsetOf("VMBytecode");
-                int index = Virtualization.Fixups[i];
-
-                byte[] bytes = _injector.Bytes[(start + index)..];
-                byte length = bytes[0];
-                byte[] decrypted = Virtualization.Crypt(bytes[1..length], index);
-
-                ulong dst = BitConverter.ToUInt64(decrypted, 3);
-
-                bool isInSameSection = dst >= newSectionRVA && dst < newSectionRVA + newSectionSize;
-
-                if (isInSameSection)
-                {
-                    uint target = (uint)(dst - newSectionRVA);
-
-                    foreach (var adjustment in _adjustments.Where(x => x.Offset < target))
-                    {
-                        dst += (uint)adjustment.Length;
-                    }
-
-                    Console.WriteLine("Fixup: 0x{0}", dst.ToString("X16"));
-
-                    Virtualization.Crypt(BitConverter.GetBytes(dst), index).CopyTo(_injector.Bytes, start + index + 3);
-                }
-            }
-
             _references.Clear();
             _adjustments.Clear();
         }
@@ -469,10 +445,13 @@ namespace radon_vm
 
             _references.Clear();
 
-            Execute(new Virtualization(), oldSectionRVA, newSectionRVA, ref code);
+            if (_packer)
+            {
+                Execute(new Virtualization(), oldSectionRVA, newSectionRVA, ref code);
+            }
             Execute(new Mutation(), oldSectionRVA, newSectionRVA, ref code);
 
-            _newCodeSection = new PESection(".radon1",
+            _newCodeSection = new PESection(".radon3",
                 SectionFlags.ContentCode | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,
                 new DataSegment(code));
             _file.Sections.Add(_newCodeSection);
@@ -508,6 +487,7 @@ namespace radon_vm
                 _file.Write(ms);
 
                 byte[] image = ms.ToArray();
+
                 FixRelocs(image, _oldCodeSection, _newCodeSection);
                 FixExceptions(image, _oldCodeSection, _newCodeSection);
 
@@ -526,7 +506,19 @@ namespace radon_vm
         {
             var inject = _file.GetSectionContainingRva(_injector.Rva);
             inject.Contents = new DataSegment(_injector.Bytes.ToArray());
-            _file.Write(_filename);
+
+            if (_packer)
+            {
+                using (var ms = new MemoryStream())
+                {
+                    _file.Write(ms);
+                    Packer.Execute(_newCodeSection!.Rva, ms.ToArray(), _filename);
+                }
+            }
+            else
+            {
+                _file.Write(_filename);
+            }
         }
 
         sealed class Adjustment

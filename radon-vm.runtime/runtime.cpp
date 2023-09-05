@@ -254,6 +254,9 @@ __declspec(safebuffers) void VMExit(VMState* state) {
 	uint64_t registers[16];
 	LI_FN(memcpy)(registers, state->registers, sizeof(registers));
 
+	uint64_t stack = registers[VMRegister::RSP];
+	uint64_t frame = registers[VMRegister::RBP];
+
 	uintptr_t image = reinterpret_cast<uintptr_t>(LI_FN(GetModuleHandleA)(nullptr));
 	uintptr_t address = image + state->call;
 
@@ -269,9 +272,8 @@ __declspec(safebuffers) void VMExit(VMState* state) {
 		jne equal
 		je ignore
 
-	equal:
-		call address
-
+		equal:
+			call address
 	ignore:
 	}
 }

@@ -7,11 +7,6 @@ namespace radon_vm.Protections
 {
     internal class Virtualization : IProtection
     {
-        public static List<int> Fixups { get { return _fixups; } }
-
-        // Offset of instruction in section and fixup for VM bytecode
-        private static List<int> _fixups = new List<int>();
-
         enum VMRegister
         {
             RAX,
@@ -257,24 +252,10 @@ namespace radon_vm.Protections
                 else if (kind == OpKind.Memory)
                 {
                     Register reg = instr.MemoryBase;
-
-                    if (instr.IsIPRelativeMemoryOperand)
-                    {
-                        _fixups.Add(index);
-                        bytes.AddRange(BitConverter.GetBytes(instr.IPRelativeMemoryAddress));
-                    }
-                    else
-                    {
-                        bytes.Add((byte)reg.GetSize());
-                        bytes.Add((byte)ToVMRegister(reg));
-                        bytes.Add((byte)GetRegisterPart(reg));
-                    }
+                    bytes.Add((byte)reg.GetSize());
+                    bytes.Add((byte)ToVMRegister(reg));
+                    bytes.Add((byte)GetRegisterPart(reg));
                 }
-                /*else if (kind == OpKind.NearBranch16 || kind == OpKind.NearBranch32 || kind == OpKind.NearBranch64)
-                {
-                    _fixups.Add(index);
-                    bytes.AddRange(BitConverter.GetBytes(instr.NearBranchTarget));
-                }*/
                 else
                 {
                     throw new NotImplementedException();
@@ -326,15 +307,12 @@ namespace radon_vm.Protections
 
         private bool IsSupported(Instruction instr)
         {
-            if (instr.Op0Register != Register.RSP && instr.Op0Register != Register.RBP && (instr.Mnemonic == Mnemonic.Add || instr.Mnemonic == Mnemonic.Sub))
+            if (instr.MemoryBase != Register.RIP && instr.MemoryBase != Register.RBP && instr.MemoryBase != Register.RSP && 
+                instr.Op1Kind != OpKind.Memory && instr.Op0Register != Register.RSP && instr.Op0Register != Register.RBP && 
+                (instr.Mnemonic == Mnemonic.Add || instr.Mnemonic == Mnemonic.Sub))
             {
                 return true;
             } 
-            else if (instr.IsIPRelativeMemoryOperand && instr.Mnemonic == Mnemonic.Call)
-            {
-                // NOT SUPPORTED YET
-                //return true;
-            }
             return false;
         }
 

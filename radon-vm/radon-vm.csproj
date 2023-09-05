@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\radon-vm.runtime.packer\radon-vm.runtime.packer.vcxproj" />
     <ProjectReference Include="..\radon-vm.runtime\radon-vm.runtime.vcxproj" />
   </ItemGroup>
 

@@ -19,7 +19,7 @@
 
             File.Copy(inputPath, outputPath, true);
 
-            Compiler compiler = new Compiler(outputPath);
+            Compiler compiler = new Compiler(outputPath, true);
             compiler.Protect();
             compiler.Save();
         }
