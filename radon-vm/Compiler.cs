@@ -54,7 +54,7 @@ namespace radon_vm
 
             _adjustments = new List<Adjustment>();
 
-            PESection inject = new PESection(".radon2", SectionFlags.ContentCode | SectionFlags.ContentInitializedData | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,
+            PESection inject = new PESection(Util.GenerateSectionName(), SectionFlags.ContentCode | SectionFlags.ContentInitializedData | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,
                 new DataSegment(new byte[InjectHelper.SECTION_SIZE]));
             _file.Sections.Add(inject);
             _file.UpdateHeaders();
@@ -242,7 +242,7 @@ namespace radon_vm
                         {
                             int end = insert.Key + insert.Value.Bytes.Length;
 
-                            if (end < src && end < (uint)(dst - newIP))
+                            if (end <= src && end < (uint)(dst - newIP))
                             {
                                 dst -= (uint)insert.Value.Length;
                             }
@@ -278,6 +278,7 @@ namespace radon_vm
                     {
                         adjusted[offset + i] = adjustment.Bytes[i];
                     }
+
                     if (adjustment.Bytes.Length > adjustment.Replace)
                     {
                         adjusted.InsertRange(offset + adjustment.Replace.Value, adjustment.Bytes[adjustment.Replace.Value..]);
@@ -451,7 +452,7 @@ namespace radon_vm
             }
             Execute(new Mutation(), oldSectionRVA, newSectionRVA, ref code);
 
-            _newCodeSection = new PESection(".radon3",
+            _newCodeSection = new PESection(Util.GenerateSectionName(),
                 SectionFlags.ContentCode | SectionFlags.MemoryExecute | SectionFlags.MemoryRead,
                 new DataSegment(code));
             _file.Sections.Add(_newCodeSection);

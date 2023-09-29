@@ -58,7 +58,7 @@ namespace radon_vm.Protections
                     new DataSegment(runtime.Serialize()));
                 dst.Sections.Add(section0);
 
-                PESection section1 = new PESection(".radon1", SectionFlags.ContentInitializedData | SectionFlags.MemoryRead, 
+                PESection section1 = new PESection(".radon1", SectionFlags.ContentInitializedData | SectionFlags.MemoryRead,
                     new DataSegment(payload.Serialize()));
                 dst.Sections.Add(section1);
 

@@ -307,8 +307,9 @@ namespace radon_vm.Protections
 
         private bool IsSupported(Instruction instr)
         {
-            if (instr.MemoryBase != Register.RIP && instr.MemoryBase != Register.RBP && instr.MemoryBase != Register.RSP && 
-                instr.Op1Kind != OpKind.Memory && instr.Op0Register != Register.RSP && instr.Op0Register != Register.RBP && 
+            if (instr.MemoryBase != Register.RIP && instr.MemoryBase != Register.RBP && instr.MemoryBase != Register.RSP &&
+                instr.Op0Register != Register.RSP && instr.Op0Register != Register.RBP &&
+                instr.Op1Register != Register.RSP && instr.Op1Register != Register.RBP &&
                 (instr.Mnemonic == Mnemonic.Add || instr.Mnemonic == Mnemonic.Sub))
             {
                 return true;
